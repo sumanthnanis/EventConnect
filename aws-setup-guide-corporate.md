@@ -246,13 +246,22 @@ aws iam attach-role-policy \
 
 ## 🚀 Step 6: Create ECS Cluster
 
-### 6.1 Create ECS Service-Linked Role (FIRST!)
+### 6.1 Handle ECS Service-Linked Role (Corporate Account)
 ```bash
-# Create the ECS service-linked role (required before creating clusters)
-aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com
+# Check if ECS service-linked role already exists
+aws iam get-role --role-name AWSServiceRoleForECS
 
-# Note: If you get "already exists" error, that's fine - just continue
+# If it exists, you'll see role details - continue to step 6.2
+# If it doesn't exist, you'll get "NoSuchEntity" error
 ```
+
+**If the role doesn't exist, you have 2 options:**
+
+**Option A: Ask IT to create it**
+Send this to your IT team: "Please run: `aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com`"
+
+**Option B: Try creating cluster anyway (often works!)**
+Many corporate accounts already have this role created by IT. Skip to step 6.2.
 
 ### 6.2 Create Cluster in CloudShell
 ```bash
