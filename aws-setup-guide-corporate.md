@@ -429,7 +429,8 @@ Ask your IT team for:
 ### 9.2 Set Up Local Environment
 ```bash
 # In your CodeReview AI project directory
-npm install aws-sdk dotenv
+# Install Python dependencies for AWS integration
+pip install boto3 python-dotenv
 
 # Create .env file
 cat > .env << 'EOF'
@@ -454,8 +455,9 @@ ECS_TASK_DEFINITION=codereview-ai-backend
 ECR_REPOSITORY_URI=your-account-id.dkr.ecr.us-east-1.amazonaws.com/codereview-ai-backend
 
 # Application Settings
-NODE_ENV=production
+ENVIRONMENT=production
 USE_AWS_SERVICES=true
+PORT=5000
 EOF
 ```
 
@@ -463,32 +465,46 @@ EOF
 
 ## 🐳 Step 10: Build and Deploy Backend to ECS
 
-### 10.1 Create FastAPI Backend Code
-Create `backend/Dockerfile`:
+### 10.1 Create FastAPI Backend Deployment Files
+Create `Dockerfile` (in your project root):
 ```dockerfile
 FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+# Copy Python requirements
+COPY pyproject.toml uv.lock ./
 
-COPY . .
+# Install uv and dependencies
+RUN pip install uv
+RUN uv sync --frozen
 
-EXPOSE 8000
+# Copy application code
+COPY main.py ./
+COPY server/ ./server/
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+EXPOSE 5000
+
+# Run the FastAPI application
+CMD ["python", "main.py"]
 ```
 
-Create `backend/requirements.txt`:
-```txt
-fastapi==0.104.1
-uvicorn==0.24.0
-boto3==1.34.0
-pydantic==2.5.0
+Update your `pyproject.toml` to include AWS dependencies:
+```toml
+[project]
+name = "codereview-ai"
+version = "1.0.0"
+dependencies = [
+    "fastapi",
+    "uvicorn", 
+    "boto3",
+    "pydantic",
+    "python-dotenv",
+    "python-multipart"
+]
 ```
 
-Create `backend/main.py`:
+Your existing `main.py` is already set up for AWS integration. Here's the enhanced version with full AWS support:
 ```python
 from fastapi import FastAPI, HTTPException
 import boto3
@@ -682,9 +698,10 @@ aws logs tail /aws/lambda/codereview-ai-processor --follow
 
 ### 11.2 Test Your Application
 1. Update your `.env` file with real values
-2. Start your app: `npm run dev`
-3. Upload a code file
-4. Verify complete workflow:
+2. Start your Python backend: `python main.py`
+3. Start your frontend: `npm run frontend` (runs on port 3000)
+4. Upload a code file
+5. Verify complete workflow:
    - File uploads to S3
    - Lambda triggers
    - ECS task starts
@@ -721,10 +738,11 @@ aws logs tail /aws/lambda/codereview-ai-processor --follow
 
 **TOMORROW:**
 - [ ] Got access keys from IT
-- [ ] Set up local development environment
-- [ ] Built and deployed FastAPI backend to ECS
+- [ ] Set up local Python development environment
+- [ ] Updated existing FastAPI backend for AWS integration
+- [ ] Built and deployed Python backend container to ECS
 - [ ] Configured complete S3 → Lambda → ECS → Bedrock workflow
-- [ ] Tested end-to-end analysis
+- [ ] Tested end-to-end analysis with Python backend
 
 **🎉 Success!** Your CodeReview AI is running on AWS with Claude 3.5 Sonnet!
 
