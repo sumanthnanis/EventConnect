@@ -10,11 +10,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-- Fixed file upload functionality for both single files and folder uploads
-- Added automatic filtering of non-code files during folder upload
-- Improved error handling and user feedback for upload process
-- Created comprehensive AWS setup guide for production deployment
-- Demo mode works perfectly with simulated AWS services
+- **MAJOR: Migrated backend from Express.js to FastAPI** - Complete server migration while keeping frontend and functionality identical
+- All API endpoints maintain exact same behavior and response formats
+- File upload, analysis processing, and results delivery work identically
+- Request logging and error handling preserved
+- Static file serving for React frontend works perfectly
+- Background task processing for file analysis maintained
+- Demo mode continues to work with simulated AWS services
 
 ## System Architecture
 
@@ -27,11 +29,13 @@ Preferred communication style: Simple, everyday language.
 - **File Handling**: Native HTML5 file upload with drag-and-drop support
 
 ### Backend Architecture
-- **Runtime**: Node.js with Express.js framework
-- **Language**: TypeScript with ES modules
-- **File Processing**: Multer for multipart form data handling
+- **Runtime**: Python 3.11 with FastAPI framework
+- **Language**: Python with type hints and Pydantic models
+- **File Processing**: FastAPI's multipart form handling for file uploads
 - **Storage Interface**: Abstracted storage layer with in-memory implementation for development
 - **API Design**: RESTful endpoints with structured error handling and request logging
+- **Background Tasks**: Async background processing for file analysis
+- **Server**: Uvicorn ASGI server with auto-reload in development
 
 ### Data Storage Solutions
 - **Database**: PostgreSQL with Drizzle ORM for type-safe database operations
@@ -62,9 +66,11 @@ Preferred communication style: Simple, everyday language.
 ### Third-party Libraries
 - **UI Framework**: React ecosystem with modern hooks and functional components
 - **Form Handling**: React Hook Form with Zod schema validation
-- **Database**: Drizzle ORM with PostgreSQL driver for type-safe database operations
-- **AWS SDK**: Version 2.x for S3 operations and Bedrock integration
+- **Database**: Drizzle ORM with PostgreSQL driver for type-safe database operations (frontend schema)
+- **Backend Framework**: FastAPI with Pydantic for data validation and async request handling
+- **AWS SDK**: Boto3 for S3 operations and Bedrock integration
 - **Build Tools**: Vite for fast development and optimized production builds
+- **Server**: Uvicorn ASGI server for high-performance async Python web serving
 
 ### Development Tools
 - **TypeScript**: Full type safety across frontend, backend, and shared schemas
