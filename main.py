@@ -301,12 +301,12 @@ async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "service": "CodeReview AI FastAPI"}
 
-# Serve static files (the built frontend)
-if not os.getenv("NODE_ENV") == "development":
+# Serve static files (the built frontend) - only in production
+if os.getenv("NODE_ENV") == "production" and os.path.exists("dist/public"):
     app.mount("/", StaticFiles(directory="dist/public", html=True), name="static")
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 8000))
+    port = int(os.getenv("PORT", 5000))  # FastAPI serves everything on port 5000
     uvicorn.run(
         "main:app", 
         host="0.0.0.0", 
