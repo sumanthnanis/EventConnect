@@ -170,8 +170,9 @@ export default function FileUpload({ onUploadComplete }) {
         <input
           ref={fileInputRef}
           type="file"
-          multiple
-          accept=".js,.jsx,.ts,.tsx,.py,.java,.cpp,.c,.go,.rs,.php,.rb,.swift,.kt,.scala,.clj,.hs,.ml,.fs,.elm,.dart,.lua,.r,.m,.mm,.cc,.cxx,.h,.hpp,.cs,.vb,.pas,.ada,.f,.f90,.f95,.jl,.nim,.cr,.zig,.odin,.v,.asm,.s"
+          multiple={uploadType === "single"}
+          webkitdirectory={uploadType === "folder"}
+          accept={uploadType === "single" ? ".js,.jsx,.ts,.tsx,.py,.java,.cpp,.c,.go,.rs,.php,.rb,.swift,.kt,.scala,.clj,.hs,.ml,.fs,.elm,.dart,.lua,.r,.m,.mm,.cc,.cxx,.h,.hpp,.cs,.vb,.pas,.ada,.f,.f90,.f95,.jl,.nim,.cr,.zig,.odin,.v,.asm,.s" : ""}
           onChange={handleFileSelect}
           className="hidden"
         />

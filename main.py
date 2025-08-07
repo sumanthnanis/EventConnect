@@ -301,8 +301,9 @@ async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "service": "CodeReview AI FastAPI"}
 
-# Serve static files (the built frontend)
+# Serve static files (the built frontend) - always serve in development
 if os.path.exists("dist/public"):
+    print(f"📁 Serving frontend from dist/public")
     app.mount("/", StaticFiles(directory="dist/public", html=True), name="static")
 
 if __name__ == "__main__":
