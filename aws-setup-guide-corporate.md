@@ -300,7 +300,7 @@ aws ecs list-clusters
 ```bash
 # Test Claude 3.7 Sonnet
 aws bedrock-runtime invoke-model \
-    --model-id anthropic.claude-3-7-sonnet-20241022-v2:0 \
+    --model-id us.anthropic.claude-3-7-sonnet-20250219-v1:0 \
     --body '{"anthropic_version": "bedrock-2023-05-31", "max_tokens": 100, "messages": [{"role": "user", "content": "Write a hello world in JavaScript"}]}' \
     --region us-east-1 \
     output.txt
@@ -443,7 +443,7 @@ AWS_DEFAULT_REGION=us-east-1
 S3_BUCKET_NAME=your-bucket-name-here
 
 # Bedrock Configuration
-BEDROCK_MODEL_ID=anthropic.claude-3-7-sonnet-20241022-v2:0
+BEDROCK_MODEL_ID=us.anthropic.claude-3-7-sonnet-20250219-v1:0
 BEDROCK_REGION=us-east-1
 
 # ECS Configuration
@@ -604,12 +604,15 @@ async def analyze_with_bedrock(code_content: str, filename: str):
     }
     
     response = bedrock_client.invoke_model(
-        modelId="anthropic.claude-3-7-sonnet-20241022-v2:0",
-        body=json.dumps(body)
+        modelId="us.anthropic.claude-3-7-sonnet-20250219-v1:0",
+        body=json.dumps(body),
+        contentType='application/json'
     )
     
-    response_body = json.loads(response['body'].read())
-    analysis_text = response_body['content'][0]['text']
+    # Fix for invalidbase64 error - properly decode the streaming body
+    response_body = response['body'].read().decode('utf-8')
+    response_json = json.loads(response_body)
+    analysis_text = response_json['content'][0]['text']
     
     try:
         return json.loads(analysis_text)
