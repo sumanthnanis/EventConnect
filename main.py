@@ -280,6 +280,7 @@ app.mount("/assets", StaticFiles(directory="dist/public/assets"), name="assets")
 
 # Serve static files and handle client-side routing
 @app.get("/")
+@app.head("/")
 async def serve_index():
     """Serve the main React application"""
     return FileResponse("dist/public/index.html")
