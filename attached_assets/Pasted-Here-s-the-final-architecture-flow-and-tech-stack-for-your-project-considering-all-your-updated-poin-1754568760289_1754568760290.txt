@@ -1,0 +1,122 @@
+Here's the final architecture flow and tech stack for your project considering all your updated points:
+
+✅ Final Architecture Flow
+
+📦 Step-by-Step Flow (Simplified):
+
+1. 
+
+Frontend (React or Next.js)
+
+User selects and uploads either a single file or a folder (containing 3–6 interdependent files).
+
+Files are uploaded directly to S3 using a pre-signed URL from the backend.
+
+
+2. 
+
+S3 Bucket
+
+Stores uploaded files temporarily (with lifecycle policy to auto-delete).
+
+On file/folder upload, a Lambda function is triggered.
+
+
+3. 
+
+AWS Lambda
+
+Triggered by the S3 upload.
+
+It processes and extracts necessary metadata.
+
+Passes the folder content to the FastAPI backend on ECS for review generation.
+
+
+4. 
+
+FastAPI Backend (Dockerized) running on ECS (Fargate)
+
+Retrieves uploaded files from S3 using the file/folder path.
+
+Sends them to Amazon Bedrock for analysis (e.g., Claude or Titan model).
+
+Applies logic to generate a review (e.g., missing arguments in helper files, file structure inconsistencies).
+
+
+5. 
+
+Amazon Bedrock
+
+Takes file contents and generates intelligent feedback.
+
+Returns insights/errors/suggestions.
+
+
+6. 
+
+FastAPI Backend
+
+Processes and formats the review.
+
+Sends it back to the frontend as response to the original request.
+
+
+7. 
+
+Frontend
+
+Displays the review to the user.
+
+No data is stored persistently (fully stateless/ephemeral).
+
+
+🧱 Tech Stack – and What It’s Used For
+
+Tech
+
+Purpose
+
+React / Next.js
+
+Frontend to upload files, show reviews
+
+Amazon S3
+
+Temporary storage for uploaded files/folders
+
+Lifecycle Policy
+
+Auto-delete S3 files after a short TTL
+
+AWS Lambda
+
+Triggered on upload; invokes backend with file metadata
+
+FastAPI
+
+Main backend API (Dockerized)
+
+Amazon ECS (Fargate)
+
+Runs FastAPI backend in containers
+
+Amazon ECR
+
+Stores FastAPI Docker image for ECS
+
+Amazon Bedrock
+
+Analyzes file contents and gives review
+
+IAM Roles
+
+Manages permissions across Lambda, S3, ECS, Bedrock
+
+CloudWatch
+
+Logs from Lambda and ECS for debugging
+
+⚙️ Suggested Development Plan
+
+This is my plan for my project mention what all are we using in the project and for what in a small table
