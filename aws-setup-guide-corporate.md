@@ -12,7 +12,7 @@ Your CodeReview AI will use these AWS services:
 | **AWS Lambda** | Triggers when files are uploaded | Automatically starts analysis when files arrive |
 | **ECS Fargate** | Runs FastAPI backend service | Handles complex analysis workflows |
 | **ECR** | Container registry for Docker images | Stores your custom backend container |
-| **Amazon Bedrock** | AI-powered code review (DeepSeek R1) | Provides intelligent insights about your code |
+| **Amazon Bedrock** | AI-powered code review (Claude 3.7 Sonnet) | Provides intelligent insights about your code |
 | **CloudWatch** | Logging and monitoring | Track what's happening and debug issues |
 | **IAM Roles** | Service permissions | Secure communication between services |
 
@@ -21,7 +21,7 @@ Your CodeReview AI will use these AWS services:
 **TODAY (Without Access Keys - 45 minutes):**
 - Test permissions in CloudShell
 - Create S3 bucket with proper configuration  
-- Enable Bedrock and test DeepSeek R1
+- Enable Bedrock and test Claude 3.7 Sonnet
 - Create IAM roles for services
 - Set up ECS cluster and ECR repository
 
@@ -293,18 +293,18 @@ aws ecs list-clusters
 1. In AWS Console, search for **"Bedrock"**
 2. Click **"Amazon Bedrock"**
 3. In left menu, click **"Model access"**
-4. Find **"DeepSeek R1"** by DeepSeek (you mentioned you have access)
+4. Find **"Claude 3.7 Sonnet"** by Anthropic (you mentioned you have access)
 5. Verify it shows **"Access granted"**
 
 ### 7.2 Test Bedrock in CloudShell
 ```bash
-# Test DeepSeek R1
+# Test Claude 3.7 Sonnet
 # Create and base64 encode the request body
 echo '{"anthropic_version": "bedrock-2023-05-31", "max_tokens": 100, "messages": [{"role": "user", "content": "Write a hello world in JavaScript"}]}' | base64 > request_encoded.txt
 
 # Then invoke the model with base64 encoded body
 aws bedrock-runtime invoke-model \
-    --model-id deepseek.deepseek-r1-distill-qwen-32b \  # Update with exact model ID
+    --model-id us.anthropic.claude-3-7-sonnet-20250219-v1:0 \
     --body "$(cat request_encoded.txt)" \
     --region us-east-1 \
     output.txt
@@ -447,7 +447,7 @@ AWS_DEFAULT_REGION=us-east-1
 S3_BUCKET_NAME=your-bucket-name-here
 
 # Bedrock Configuration
-BEDROCK_MODEL_ID=deepseek.deepseek-r1-distill-qwen-32b  # Update with exact model ID
+BEDROCK_MODEL_ID=us.anthropic.claude-3-7-sonnet-20250219-v1:0
 BEDROCK_REGION=us-east-1
 
 # ECS Configuration
@@ -526,7 +526,7 @@ bedrock_client = boto3.client('bedrock-runtime', region_name=os.getenv('AWS_REGI
 @app.post("/analyze-session/{session_id}")
 async def analyze_session(session_id: str):
     """
-    Analyze all files in a session using DeepSeek R1
+    Analyze all files in a session using Claude 3.7 Sonnet
     """
     try:
         bucket = os.getenv('S3_BUCKET_NAME')
@@ -549,7 +549,7 @@ async def analyze_session(session_id: str):
                 file_response = s3_client.get_object(Bucket=bucket, Key=key)
                 file_content = file_response['Body'].read().decode('utf-8')
                 
-                # Analyze with DeepSeek R1
+                # Analyze with Claude 3.7 Sonnet
                 analysis = await analyze_with_bedrock(file_content, key)
                 analysis_results.append({
                     'file': key,
@@ -577,7 +577,7 @@ async def analyze_session(session_id: str):
 
 async def analyze_with_bedrock(code_content: str, filename: str):
     """
-    Analyze code using DeepSeek R1
+    Analyze code using Claude 3.7 Sonnet
     """
     prompt = f"""
     Analyze this code file and provide a comprehensive review:
@@ -608,7 +608,7 @@ async def analyze_with_bedrock(code_content: str, filename: str):
     }
     
     response = bedrock_client.invoke_model(
-        modelId="deepseek.deepseek-r1-distill-qwen-32b",  # Update with exact model ID
+        modelId="us.anthropic.claude-3-7-sonnet-20250219-v1:0",
         body=json.dumps(body),
         contentType='application/json'
     )
@@ -714,7 +714,7 @@ aws logs tail /aws/lambda/codereview-ai-processor --follow
    - ECS task starts
    - Analysis results appear
 
-**✅ Final Checkpoint**: End-to-end analysis workflow complete with DeepSeek R1
+**✅ Final Checkpoint**: End-to-end analysis workflow complete with Claude 3.7 Sonnet
 
 ---
 
@@ -724,7 +724,7 @@ aws logs tail /aws/lambda/codereview-ai-processor --follow
 - S3: $0.10
 - Lambda: $0.05
 - ECS Fargate: $2.00
-- Bedrock (DeepSeek R1): $1.50
+- Bedrock (Claude 3.7 Sonnet): $1.50
 - **Total: ~$3.65/day or $110/month**
 
 **Light Usage (2-3 analyses/day):**
@@ -740,7 +740,7 @@ aws logs tail /aws/lambda/codereview-ai-processor --follow
 - [ ] Created ECR repository
 - [ ] Created IAM roles for ECS and Lambda
 - [ ] Created ECS cluster
-- [ ] Tested Bedrock access with DeepSeek R1
+- [ ] Tested Bedrock access with Claude 3.7 Sonnet
 - [ ] Created Lambda function
 
 **TOMORROW:**
@@ -751,7 +751,7 @@ aws logs tail /aws/lambda/codereview-ai-processor --follow
 - [ ] Configured complete S3 → Lambda → ECS → Bedrock workflow
 - [ ] Tested end-to-end analysis with Python backend
 
-**🎉 Success!** Your CodeReview AI is running on AWS with DeepSeek R1!
+**🎉 Success!** Your CodeReview AI is running on AWS with Claude 3.7 Sonnet!
 
 ## ⚡ Step 3: Enable Amazon Bedrock (UI Method)
 
