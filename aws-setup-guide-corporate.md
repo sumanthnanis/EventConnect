@@ -265,11 +265,14 @@ Many corporate accounts already have this role created by IT. Skip to step 6.2.
 
 ### 6.2 Create Cluster in CloudShell
 ```bash
-# Now create ECS cluster
-aws ecs create-cluster \
-    --cluster-name codereview-ai-cluster \
-    --capacity-providers FARGATE \
-    --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1
+# Create ECS cluster (simpler approach for corporate accounts)
+aws ecs create-cluster --cluster-name codereview-ai-cluster
+
+# Alternative: If you have service-linked role permissions, try:
+# aws ecs create-cluster \
+#     --cluster-name codereview-ai-cluster \
+#     --capacity-providers FARGATE \
+#     --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1
 
 # Verify cluster creation
 aws ecs list-clusters
