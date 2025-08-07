@@ -12,7 +12,7 @@ Your CodeReview AI will use these AWS services:
 | **AWS Lambda** | Triggers when files are uploaded | Automatically starts analysis when files arrive |
 | **ECS Fargate** | Runs FastAPI backend service | Handles complex analysis workflows |
 | **ECR** | Container registry for Docker images | Stores your custom backend container |
-| **Amazon Bedrock** | AI-powered code review (Claude 3.5 Sonnet) | Provides intelligent insights about your code |
+| **Amazon Bedrock** | AI-powered code review (Claude 3.7 Sonnet) | Provides intelligent insights about your code |
 | **CloudWatch** | Logging and monitoring | Track what's happening and debug issues |
 | **IAM Roles** | Service permissions | Secure communication between services |
 
@@ -21,7 +21,7 @@ Your CodeReview AI will use these AWS services:
 **TODAY (Without Access Keys - 45 minutes):**
 - Test permissions in CloudShell
 - Create S3 bucket with proper configuration  
-- Enable Bedrock and test Claude 3.5 Sonnet
+- Enable Bedrock and test Claude 3.7 Sonnet
 - Create IAM roles for services
 - Set up ECS cluster and ECR repository
 
@@ -293,14 +293,14 @@ aws ecs list-clusters
 1. In AWS Console, search for **"Bedrock"**
 2. Click **"Amazon Bedrock"**
 3. In left menu, click **"Model access"**
-4. Find **"Claude 3.5 Sonnet"** by Anthropic (you mentioned you have access)
+4. Find **"Claude 3.7 Sonnet"** by Anthropic (you mentioned you have access)
 5. Verify it shows **"Access granted"**
 
 ### 7.2 Test Bedrock in CloudShell
 ```bash
-# Test Claude 3.5 Sonnet
+# Test Claude 3.7 Sonnet
 aws bedrock-runtime invoke-model \
-    --model-id anthropic.claude-3-5-sonnet-20241022-v2:0 \
+    --model-id anthropic.claude-3-7-sonnet-20241022-v2:0 \
     --body '{"anthropic_version": "bedrock-2023-05-31", "max_tokens": 100, "messages": [{"role": "user", "content": "Write a hello world in JavaScript"}]}' \
     --region us-east-1 \
     output.txt
@@ -443,7 +443,7 @@ AWS_DEFAULT_REGION=us-east-1
 S3_BUCKET_NAME=your-bucket-name-here
 
 # Bedrock Configuration
-BEDROCK_MODEL_ID=anthropic.claude-3-5-sonnet-20241022-v2:0
+BEDROCK_MODEL_ID=anthropic.claude-3-7-sonnet-20241022-v2:0
 BEDROCK_REGION=us-east-1
 
 # ECS Configuration
@@ -522,7 +522,7 @@ bedrock_client = boto3.client('bedrock-runtime', region_name=os.getenv('AWS_REGI
 @app.post("/analyze-session/{session_id}")
 async def analyze_session(session_id: str):
     """
-    Analyze all files in a session using Claude 3.5 Sonnet
+    Analyze all files in a session using Claude 3.7 Sonnet
     """
     try:
         bucket = os.getenv('S3_BUCKET_NAME')
@@ -545,7 +545,7 @@ async def analyze_session(session_id: str):
                 file_response = s3_client.get_object(Bucket=bucket, Key=key)
                 file_content = file_response['Body'].read().decode('utf-8')
                 
-                # Analyze with Claude 3.5 Sonnet
+                # Analyze with Claude 3.7 Sonnet
                 analysis = await analyze_with_bedrock(file_content, key)
                 analysis_results.append({
                     'file': key,
@@ -573,7 +573,7 @@ async def analyze_session(session_id: str):
 
 async def analyze_with_bedrock(code_content: str, filename: str):
     """
-    Analyze code using Claude 3.5 Sonnet
+    Analyze code using Claude 3.7 Sonnet
     """
     prompt = f"""
     Analyze this code file and provide a comprehensive review:
@@ -604,7 +604,7 @@ async def analyze_with_bedrock(code_content: str, filename: str):
     }
     
     response = bedrock_client.invoke_model(
-        modelId="anthropic.claude-3-5-sonnet-20241022-v2:0",
+        modelId="anthropic.claude-3-7-sonnet-20241022-v2:0",
         body=json.dumps(body)
     )
     
@@ -707,7 +707,7 @@ aws logs tail /aws/lambda/codereview-ai-processor --follow
    - ECS task starts
    - Analysis results appear
 
-**✅ Final Checkpoint**: End-to-end analysis workflow complete with Claude 3.5 Sonnet
+**✅ Final Checkpoint**: End-to-end analysis workflow complete with Claude 3.7 Sonnet
 
 ---
 
@@ -717,7 +717,7 @@ aws logs tail /aws/lambda/codereview-ai-processor --follow
 - S3: $0.10
 - Lambda: $0.05
 - ECS Fargate: $2.00
-- Bedrock (Claude 3.5 Sonnet): $1.50
+- Bedrock (Claude 3.7 Sonnet): $1.50
 - **Total: ~$3.65/day or $110/month**
 
 **Light Usage (2-3 analyses/day):**
@@ -733,7 +733,7 @@ aws logs tail /aws/lambda/codereview-ai-processor --follow
 - [ ] Created ECR repository
 - [ ] Created IAM roles for ECS and Lambda
 - [ ] Created ECS cluster
-- [ ] Tested Bedrock access with Claude 3.5 Sonnet
+- [ ] Tested Bedrock access with Claude 3.7 Sonnet
 - [ ] Created Lambda function
 
 **TOMORROW:**
@@ -744,7 +744,7 @@ aws logs tail /aws/lambda/codereview-ai-processor --follow
 - [ ] Configured complete S3 → Lambda → ECS → Bedrock workflow
 - [ ] Tested end-to-end analysis with Python backend
 
-**🎉 Success!** Your CodeReview AI is running on AWS with Claude 3.5 Sonnet!
+**🎉 Success!** Your CodeReview AI is running on AWS with Claude 3.7 Sonnet!
 
 ## ⚡ Step 3: Enable Amazon Bedrock (UI Method)
 
