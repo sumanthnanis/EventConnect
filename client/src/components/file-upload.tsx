@@ -108,21 +108,31 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
     setIsDragOver(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
     
-    if (uploadType === "folder" && e.dataTransfer.items) {
-      // Handle folder drop
+    if (e.dataTransfer.items) {
       const items = Array.from(e.dataTransfer.items);
       const files: File[] = [];
       
-      items.forEach(item => {
+      // Process each item
+      for (const item of items) {
         if (item.kind === 'file') {
-          const file = item.getAsFile();
-          if (file) files.push(file);
+          const entry = item.webkitGetAsEntry();
+          if (entry) {
+            if (entry.isFile) {
+              // Single file
+              const file = item.getAsFile();
+              if (file) files.push(file);
+            } else if (entry.isDirectory && uploadType === "folder") {
+              // Directory - traverse and collect files
+              const dirFiles = await traverseDirectory(entry as FileSystemDirectoryEntry);
+              files.push(...dirFiles);
+            }
+          }
         }
-      });
+      }
       
       if (files.length > 0) {
         const dt = new DataTransfer();
@@ -133,6 +143,36 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       handleFileSelect(e.dataTransfer.files);
     }
   }, [uploadType, handleFileSelect]);
+
+  // Helper function to traverse directory entries
+  const traverseDirectory = useCallback(async (directoryEntry: FileSystemDirectoryEntry): Promise<File[]> => {
+    const files: File[] = [];
+    const reader = directoryEntry.createReader();
+    
+    return new Promise((resolve) => {
+      const readEntries = () => {
+        reader.readEntries(async (entries) => {
+          if (entries.length === 0) {
+            resolve(files);
+            return;
+          }
+          
+          for (const entry of entries) {
+            if (entry.isFile) {
+              const file = await new Promise<File>((fileResolve) => {
+                (entry as FileSystemFileEntry).file(fileResolve);
+              });
+              files.push(file);
+            }
+          }
+          
+          readEntries(); // Continue reading
+        });
+      };
+      
+      readEntries();
+    });
+  }, []);
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -241,11 +281,19 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
             </div>
             <div>
               <p className="text-base font-medium text-slate-900">
-                Drop files here or click to upload
+                {uploadType === "folder" 
+                  ? "Drop folder here or click to select folder" 
+                  : "Drop files here or click to upload"}
               </p>
               <p className="text-sm text-slate-600 mt-1">
                 Supports: .js, .jsx, .ts, .tsx, .py, .java, .cpp, .c, .go
               </p>
+              {uploadType === "folder" && (
+                <p className="text-xs text-blue-600 mt-1">
+                  <i className="fas fa-info-circle mr-1"></i>
+                  Select a folder containing 3-6 interdependent code files
+                </p>
+              )}
             </div>
             <div className="flex justify-center space-x-4 text-xs text-slate-500">
               <span><i className="fas fa-file-code mr-1"></i>Max 10MB per file</span>
@@ -261,6 +309,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           accept=".js,.jsx,.ts,.tsx,.py,.java,.cpp,.c,.go"
           onChange={handleFileInputChange}
           className="hidden"
+          {...(uploadType === "folder" ? { webkitdirectory: "true" } : {})}
         />
 
         {/* File List */}
