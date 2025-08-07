@@ -33,8 +33,10 @@ export class MemStorage implements IStorage {
   async createAnalysisSession(insertSession: InsertAnalysisSession): Promise<AnalysisSession> {
     const id = randomUUID();
     const session: AnalysisSession = {
-      ...insertSession,
       id,
+      status: insertSession.status || 'pending',
+      totalFiles: insertSession.totalFiles || 0,
+      processedFiles: insertSession.processedFiles || 0,
       createdAt: new Date(),
       completedAt: null
     };
@@ -62,11 +64,16 @@ export class MemStorage implements IStorage {
   async createFileAnalysis(insertFile: InsertFileAnalysis): Promise<FileAnalysis> {
     const id = randomUUID();
     const fileAnalysis: FileAnalysis = {
-      ...insertFile,
       id,
+      sessionId: insertFile.sessionId,
+      fileName: insertFile.fileName,
+      fileSize: insertFile.fileSize,
+      fileType: insertFile.fileType,
+      s3Key: insertFile.s3Key,
+      status: insertFile.status || 'uploading',
+      analysisResult: null,
       createdAt: new Date(),
-      completedAt: null,
-      analysisResult: null
+      completedAt: null
     };
     this.fileAnalyses.set(id, fileAnalysis);
     return fileAnalysis;

@@ -1,23 +1,35 @@
 import AWS from 'aws-sdk';
 
-// Configure AWS SDK
-const s3 = new AWS.S3({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_REGION || 'us-east-1'
-});
-
-const bedrock = new AWS.BedrockRuntime({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_REGION || 'us-east-1'
-});
-
 const BUCKET_NAME = process.env.S3_BUCKET_NAME || 'codereview-ai-files';
+const isDevelopment = process.env.NODE_ENV === 'development';
+
+// Configure AWS SDK only if credentials are available
+let s3: AWS.S3 | null = null;
+let bedrock: AWS.BedrockRuntime | null = null;
+
+if (!isDevelopment && process.env.AWS_ACCESS_KEY_ID) {
+  s3 = new AWS.S3({
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: process.env.AWS_REGION || 'us-east-1'
+  });
+
+  bedrock = new AWS.BedrockRuntime({
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: process.env.AWS_REGION || 'us-east-1'
+  });
+}
 
 class AwsService {
   async uploadFileToS3(file: Express.Multer.File, sessionId: string): Promise<string> {
     const key = `sessions/${sessionId}/${Date.now()}-${file.originalname}`;
+    
+    if (isDevelopment || !s3) {
+      // In development mode, simulate S3 upload
+      console.log(`[DEV] Simulating S3 upload for file: ${file.originalname}`);
+      return key;
+    }
     
     const params = {
       Bucket: BUCKET_NAME,
@@ -41,6 +53,17 @@ class AwsService {
   }
 
   async getFileFromS3(s3Key: string): Promise<string> {
+    if (isDevelopment || !s3) {
+      // In development mode, return mock file content
+      console.log(`[DEV] Simulating S3 download for key: ${s3Key}`);
+      return `// Mock file content for ${s3Key}
+function exampleFunction() {
+  let userName = 'default';
+  const result = await apiCall();
+  return result;
+}`;
+    }
+
     const params = {
       Bucket: BUCKET_NAME,
       Key: s3Key
@@ -56,6 +79,11 @@ class AwsService {
   }
 
   async deleteFileFromS3(s3Key: string): Promise<void> {
+    if (isDevelopment || !s3) {
+      console.log(`[DEV] Simulating S3 delete for key: ${s3Key}`);
+      return;
+    }
+
     const params = {
       Bucket: BUCKET_NAME,
       Key: s3Key
@@ -70,6 +98,11 @@ class AwsService {
   }
 
   async analyzeCodeWithBedrock(fileContents: string[], fileNames: string[]): Promise<any> {
+    if (isDevelopment || !bedrock) {
+      console.log(`[DEV] Simulating Bedrock analysis for ${fileNames.length} files`);
+      return this.generateMockAnalysis(fileNames);
+    }
+
     const prompt = this.buildAnalysisPrompt(fileContents, fileNames);
     
     const params = {
@@ -98,6 +131,58 @@ class AwsService {
       console.error('Bedrock analysis error:', error);
       throw new Error('Failed to analyze code with Bedrock');
     }
+  }
+
+  private generateMockAnalysis(fileNames: string[]): any {
+    const issues = [
+      {
+        type: "warning",
+        severity: "medium",
+        title: "Missing error handling",
+        description: "Function does not handle potential errors from async operations",
+        file: fileNames[0],
+        line: 15,
+        code: "const result = await apiCall();",
+        suggestion: "try { const result = await apiCall(); } catch (error) { console.error(error); }"
+      },
+      {
+        type: "suggestion", 
+        severity: "low",
+        title: "Consider using const instead of let",
+        description: "Variable is never reassigned, consider using const for better immutability",
+        file: fileNames[0],
+        line: 8,
+        code: "let userName = 'default';",
+        suggestion: "const userName = 'default';"
+      },
+      {
+        type: "success",
+        severity: "low", 
+        title: "Good use of TypeScript interfaces",
+        description: "Proper type definitions improve code maintainability",
+        file: fileNames[0]
+      }
+    ];
+
+    if (fileNames.length > 1) {
+      issues.push({
+        type: "error",
+        severity: "high",
+        title: "Unused import statement", 
+        description: "Import is declared but never used in the module",
+        file: fileNames[1],
+        line: 3,
+        code: "import { unusedFunction } from './utils';",
+        suggestion: "Remove the unused import or use the function"
+      });
+    }
+
+    return {
+      passedChecks: 8,
+      warnings: 2,
+      errors: fileNames.length > 1 ? 1 : 0,
+      issues
+    };
   }
 
   private buildAnalysisPrompt(fileContents: string[], fileNames: string[]): string {
@@ -188,6 +273,11 @@ Please provide a thorough analysis and return only the JSON response.
   }
 
   async generatePresignedUrl(key: string, expiresIn: number = 3600): Promise<string> {
+    if (isDevelopment || !s3) {
+      console.log(`[DEV] Simulating presigned URL for key: ${key}`);
+      return `https://mock-s3-url.example.com/${key}?expires=${expiresIn}`;
+    }
+
     const params = {
       Bucket: BUCKET_NAME,
       Key: key,

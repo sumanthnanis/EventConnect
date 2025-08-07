@@ -247,6 +247,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           accept=".js,.jsx,.ts,.tsx,.py,.java,.cpp,.c,.go"
           onChange={handleFileInputChange}
           className="hidden"
+          {...(uploadType === "folder" && { webkitdirectory: "" })}
         />
 
         {/* File List */}

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
+import type { AnalysisStatusResponse } from "@shared/api-types";
 
 interface ProcessingStatusProps {
   sessionId: string | null;
@@ -15,7 +16,7 @@ interface ProcessingStep {
 }
 
 export default function ProcessingStatus({ sessionId, onComplete }: ProcessingStatusProps) {
-  const { data: status, isLoading } = useQuery({
+  const { data: status, isLoading } = useQuery<AnalysisStatusResponse>({
     queryKey: ['/api/analysis/status', sessionId],
     enabled: !!sessionId,
     refetchInterval: sessionId ? 2000 : false, // Poll every 2 seconds when active

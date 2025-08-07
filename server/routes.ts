@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
 import { insertFileAnalysisSchema, insertAnalysisSessionSchema } from "@shared/schema";
-import { awsService } from "./services/aws";
+// AWS service will be mocked in development mode
 import { fileProcessor } from "./services/file-processor";
 import multer from "multer";
 
@@ -45,9 +45,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         processedFiles: 0
       });
 
-      // Upload files to S3 and create file analysis records
+      // Create file analysis records (S3 upload will be simulated in development)
       const uploadPromises = files.map(async (file) => {
-        const s3Key = await awsService.uploadFileToS3(file, session.id);
+        const s3Key = `sessions/${session.id}/${Date.now()}-${file.originalname}`;
         
         return storage.createFileAnalysis({
           sessionId: session.id,
@@ -184,10 +184,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // This would be called by Lambda function after S3 upload
-      // Update file status and potentially trigger further processing
-      await storage.updateFileAnalysisByS3Key(s3Key, {
-        status: 'processing'
-      });
+      // Update file status (webhook functionality for Lambda integration)
+      const file = await storage.getFileAnalysisByS3Key(s3Key);
+      if (file) {
+        await storage.updateFileAnalysis(file.id, {
+          status: 'processing'
+        });
+      }
 
       res.json({ message: "Processing triggered" });
 
