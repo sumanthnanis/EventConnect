@@ -246,9 +246,17 @@ aws iam attach-role-policy \
 
 ## 🚀 Step 6: Create ECS Cluster
 
-### 6.1 Create Cluster in CloudShell
+### 6.1 Create ECS Service-Linked Role (FIRST!)
 ```bash
-# Create ECS cluster
+# Create the ECS service-linked role (required before creating clusters)
+aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com
+
+# Note: If you get "already exists" error, that's fine - just continue
+```
+
+### 6.2 Create Cluster in CloudShell
+```bash
+# Now create ECS cluster
 aws ecs create-cluster \
     --cluster-name codereview-ai-cluster \
     --capacity-providers FARGATE \
@@ -258,7 +266,7 @@ aws ecs create-cluster \
 aws ecs list-clusters
 ```
 
-### 6.2 Verify in Console
+### 6.3 Verify in Console
 1. In AWS Console, search for **"ECS"**
 2. Click **"Elastic Container Service"**
 3. You should see your `codereview-ai-cluster`
