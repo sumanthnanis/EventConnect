@@ -299,9 +299,13 @@ aws ecs list-clusters
 ### 7.2 Test Bedrock in CloudShell
 ```bash
 # Test Claude 3.7 Sonnet
+# First create the request body
+echo '{"anthropic_version": "bedrock-2023-05-31", "max_tokens": 100, "messages": [{"role": "user", "content": "Write a hello world in JavaScript"}]}' > request.json
+
+# Then invoke the model with file input (automatically base64 encoded)
 aws bedrock-runtime invoke-model \
     --model-id us.anthropic.claude-3-7-sonnet-20250219-v1:0 \
-    --body '{"anthropic_version": "bedrock-2023-05-31", "max_tokens": 100, "messages": [{"role": "user", "content": "Write a hello world in JavaScript"}]}' \
+    --body file://request.json \
     --region us-east-1 \
     output.txt
 
