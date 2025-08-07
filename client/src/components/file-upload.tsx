@@ -43,9 +43,10 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       onUploadComplete(data.sessionId);
     },
     onError: (error) => {
+      console.error('Upload error:', error);
       toast({
         title: "Upload failed",
-        description: error.message,
+        description: error.message || "An unknown error occurred",
         variant: "destructive",
       });
     },
@@ -56,21 +57,40 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
     
     // Validate file types
     const validExtensions = ['.js', '.jsx', '.ts', '.tsx', '.py', '.java', '.cpp', '.c', '.go'];
+    
+    // Filter to only include valid code files
+    const validFiles = fileArray.filter(file => 
+      validExtensions.some(ext => file.name.toLowerCase().endsWith(ext))
+    );
+    
     const invalidFiles = fileArray.filter(file => 
       !validExtensions.some(ext => file.name.toLowerCase().endsWith(ext))
     );
 
+    // Show warning for filtered files but continue with valid ones
     if (invalidFiles.length > 0) {
       toast({
-        title: "Invalid file types",
-        description: "Please upload only code files (.js, .jsx, .ts, .tsx, .py, .java, .cpp, .c, .go)",
+        title: `Filtered out ${invalidFiles.length} non-code files`,
+        description: `Only uploading ${validFiles.length} code files. Filtered: ${invalidFiles.slice(0, 3).map(f => f.name).join(', ')}${invalidFiles.length > 3 ? '...' : ''}`,
+        variant: "default",
+      });
+    }
+
+    // If no valid files remain, show error
+    if (validFiles.length === 0) {
+      toast({
+        title: "No valid code files found",
+        description: "Please upload files with these extensions: .js, .jsx, .ts, .tsx, .py, .java, .cpp, .c, .go",
         variant: "destructive",
       });
       return;
     }
 
+    // Use only valid files
+    const processFiles = validFiles;
+
     // Validate file count for folder upload
-    if (uploadType === "folder" && fileArray.length > 6) {
+    if (uploadType === "folder" && processFiles.length > 6) {
       toast({
         title: "Too many files",
         description: "Folder upload supports up to 6 files",
@@ -80,7 +100,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
     }
 
     // Validate file sizes
-    const oversizedFiles = fileArray.filter(file => file.size > 10 * 1024 * 1024);
+    const oversizedFiles = processFiles.filter(file => file.size > 10 * 1024 * 1024);
     if (oversizedFiles.length > 0) {
       toast({
         title: "Files too large",
@@ -90,7 +110,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       return;
     }
 
-    const newFiles: UploadedFile[] = fileArray.map(file => ({
+    const newFiles: UploadedFile[] = processFiles.map(file => ({
       file,
       id: Math.random().toString(36).substr(2, 9),
     }));

@@ -26,6 +26,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No files uploaded" });
       }
 
+      console.log(`Upload request - Type: ${uploadType}, Files received:`, files.map(f => ({ 
+        name: f.originalname, 
+        size: f.size, 
+        type: f.mimetype 
+      })));
+
       // Validate file types
       const validExtensions = ['.js', '.jsx', '.ts', '.tsx', '.py', '.java', '.cpp', '.c', '.go'];
       const invalidFiles = files.filter(file => 
@@ -33,8 +39,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       if (invalidFiles.length > 0) {
+        console.log('Invalid files found:', invalidFiles.map(f => f.originalname));
         return res.status(400).json({ 
-          message: "Invalid file types. Only code files are allowed." 
+          message: `Invalid file types found: ${invalidFiles.map(f => f.originalname).join(', ')}. Only code files (.js, .jsx, .ts, .tsx, .py, .java, .cpp, .c, .go) are allowed.` 
         });
       }
 
