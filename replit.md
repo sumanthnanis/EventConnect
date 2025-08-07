@@ -8,6 +8,14 @@ CodeReview AI is an intelligent code analysis platform that leverages Amazon Bed
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+- Fixed file upload functionality for both single files and folder uploads
+- Added automatic filtering of non-code files during folder upload
+- Improved error handling and user feedback for upload process
+- Created comprehensive AWS setup guide for production deployment
+- Demo mode works perfectly with simulated AWS services
+
 ## System Architecture
 
 ### Frontend Architecture
