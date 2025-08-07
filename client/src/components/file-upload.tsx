@@ -22,11 +22,15 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
 
   const uploadMutation = useMutation({
     mutationFn: async (files: File[]) => {
+      console.log('Uploading files:', files.length, files.map(f => f.name));
       const formData = new FormData();
-      files.forEach((file) => {
+      files.forEach((file, index) => {
+        console.log(`Adding file ${index}:`, file.name, file.size, 'bytes');
         formData.append('files', file);
       });
       formData.append('uploadType', uploadType);
+
+      console.log('FormData entries:', Array.from(formData.entries()).map(([key, value]) => [key, value instanceof File ? `File: ${value.name}` : value]));
 
       const response = await apiRequest('POST', '/api/upload', formData);
       return response.json();
@@ -153,6 +157,16 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
     uploadMutation.mutate(uploadedFiles.map(f => f.file));
   };
 
+  const handleDemoUpload = () => {
+    // Create mock files for demo
+    const mockFiles = [
+      new File(['console.log("Hello World");'], 'demo.js', { type: 'text/javascript' }),
+      new File(['function test() { return true; }'], 'utils.js', { type: 'text/javascript' })
+    ];
+    
+    uploadMutation.mutate(mockFiles);
+  };
+
   const getFileIcon = (fileName: string) => {
     const ext = fileName.toLowerCase().split('.').pop();
     const iconMap: Record<string, string> = {
@@ -247,7 +261,6 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           accept=".js,.jsx,.ts,.tsx,.py,.java,.cpp,.c,.go"
           onChange={handleFileInputChange}
           className="hidden"
-          {...(uploadType === "folder" && { webkitdirectory: "" })}
         />
 
         {/* File List */}
@@ -283,7 +296,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         )}
 
         {/* Upload Button */}
-        <div className="mt-6 pt-6 border-t border-slate-200">
+        <div className="mt-6 pt-6 border-t border-slate-200 space-y-3">
           <Button
             onClick={handleUpload}
             disabled={uploadedFiles.length === 0 || uploadMutation.isPending}
@@ -300,6 +313,17 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
                 Analyze Code with AI
               </>
             )}
+          </Button>
+          
+          {/* Demo Button */}
+          <Button
+            onClick={handleDemoUpload}
+            disabled={uploadMutation.isPending}
+            variant="outline"
+            className="w-full"
+          >
+            <i className="fas fa-play-circle mr-2"></i>
+            Try Demo (No Files Needed)
           </Button>
         </div>
       </div>
