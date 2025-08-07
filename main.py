@@ -301,8 +301,8 @@ async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "service": "CodeReview AI FastAPI"}
 
-# Serve static files (the built frontend) - only in production
-if os.getenv("NODE_ENV") == "production" and os.path.exists("dist/public"):
+# Serve static files (the built frontend)
+if os.path.exists("dist/public"):
     app.mount("/", StaticFiles(directory="dist/public", html=True), name="static")
 
 if __name__ == "__main__":
