@@ -529,8 +529,11 @@ Your AWS access keys are ready to use:
 - **Region**: `us-east-1`
 
 ### 8.2 Set Up Local Environment
+
+**⚠️ Important**: Run these commands in your **Replit Shell** (not AWS CloudShell)
+
 ```bash
-# In your CodeReview AI project directory
+# In your CodeReview AI project directory (Replit Shell)
 # Create .env file with your actual credentials
 cat > .env << EOF
 # AWS Configuration
@@ -566,9 +569,11 @@ EOF
 
 ### 9.1 Create Required Deployment Files
 
+**⚠️ Important**: Run these commands in your **Replit Shell** (not AWS CloudShell)
+
 **Create Dockerfile (in your project root):**
 ```bash
-# Create the Dockerfile
+# Create the Dockerfile (Replit Shell)
 cat > Dockerfile << 'EOF'
 FROM python:3.11-slim
 
@@ -600,7 +605,7 @@ EOF
 
 ### 9.2 Build Frontend for Production
 ```bash
-# Build the React frontend for production
+# Build the React frontend for production (Replit Shell)
 npm run build
 
 # Verify the build was created
@@ -748,8 +753,11 @@ async def health_check():
 ```
 
 ### 9.5 Build and Push to ECR
+
+**⚠️ Important**: Run these commands in your **Replit Shell** (not AWS CloudShell)
+
 ```bash
-# Get ECR login (using our environment variable)
+# Get ECR login (using our environment variable) (Replit Shell)
 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_URI
 
 # Build image (from project root directory)
@@ -766,14 +774,20 @@ aws ecr describe-images --repository-name codereview-ai-backend --region us-east
 ```
 
 ### 9.6 Create CloudWatch Log Group First
+
+**⚠️ Important**: Run these commands in **AWS CloudShell** (or Replit Shell with AWS CLI configured)
+
 ```bash
-# Create CloudWatch log group (must be created before task definition)
+# Create CloudWatch log group (must be created before task definition) (AWS CloudShell)
 aws logs create-log-group --log-group-name /ecs/codereview-ai-backend --region us-east-1
 ```
 
 ### 9.7 Create ECS Task Definition
+
+**⚠️ Important**: Run these commands in **AWS CloudShell** (or Replit Shell with AWS CLI configured)
+
 ```bash
-# Create task definition with correct values
+# Create task definition with correct values (AWS CloudShell)
 aws ecs register-task-definition \
     --family codereview-ai-backend \
     --network-mode awsvpc \
@@ -811,8 +825,11 @@ aws ecs register-task-definition \
 ```
 
 ### 9.8 Create ECS Service
+
+**⚠️ Important**: Run these commands in **AWS CloudShell** (or Replit Shell with AWS CLI configured)
+
 ```bash
-# Create ECS service (using your specific subnets)
+# Create ECS service (using your specific subnets) (AWS CloudShell)
 aws ecs create-service \
     --cluster codereview-ai-cluster \
     --service-name codereview-ai-service \
@@ -832,8 +849,11 @@ aws ecs describe-services --cluster codereview-ai-cluster --services codereview-
 ## 🧪 Step 10: Test Complete Setup
 
 ### 10.1 Test S3 Trigger
+
+**⚠️ Important**: Run these commands in **AWS CloudShell** (or Replit Shell with AWS CLI configured)
+
 ```bash
-# Test S3 trigger
+# Test S3 trigger (AWS CloudShell)
 echo "console.log('hello world');" > test.js
 aws s3 cp test.js s3://codereview-ai-files-108782072033/sessions/test-session/test.js
 
@@ -845,6 +865,9 @@ aws s3 ls s3://codereview-ai-files-108782072033/sessions/test-session/
 ```
 
 ### 10.2 Test Your Application
+
+**⚠️ Important**: Run these commands in your **Replit Shell**
+
 1. Your `.env` file is already configured with your actual credentials
 2. Start your local application: `npm run dev` (serves frontend + backend on port 5000)
 3. Open your browser to `http://localhost:5000`
