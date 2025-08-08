@@ -10,15 +10,19 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-- **MAJOR: Successfully completed Express.js to FastAPI migration** (August 7, 2025)
-- **CLEANUP: Removed all old Express/TypeScript server files** - Clean codebase with only FastAPI implementation
-- All API endpoints maintain exact same behavior and response formats (100% compatibility verified)
-- File upload, analysis processing, and results delivery work identically
-- Request logging and error handling preserved
-- Static file serving for React frontend fixed and working perfectly (GET/HEAD methods supported)
-- Background task processing for file analysis maintained
-- Demo mode continues to work with simulated AWS services
-- End-to-end testing confirms complete functionality: upload → processing → analysis → results
+- **CRITICAL: Fixed all major gaps in AWS setup guide** (August 8, 2025)
+- **Fixed missing S3 event notification setup** - Users were only running permission command, missing actual trigger
+- **Added missing Step 3** - Bedrock setup was completely missing from sequence
+- **Fixed port inconsistencies** - Guide showed 8000, app uses 5000
+- **Added VPC/subnet configuration** - ECS deployment was missing network setup
+- **Added security group creation** - Required for ECS tasks to accept traffic
+- **Fixed Claude model versions** - Standardized on Claude 3 Haiku (more cost-effective)
+- **Added frontend build step** - Production deployment was missing React build
+- **Added placeholder replacement instructions** - Users weren't replacing bucket names/account IDs
+- **Added CloudWatch log group creation** - Required before ECS task definition
+- **Added ECS service creation** - Tasks weren't being deployed as services
+- **Removed duplicate sections** - Guide had conflicting duplicate content
+- All steps now properly sequenced with correct dependencies and checkpoints
 
 ## System Architecture
 

@@ -142,6 +142,42 @@ aws configure set region us-east-1
 
 ---
 
+## ⚡ Step 3: Enable Amazon Bedrock
+
+### 3.1 Access Bedrock Console
+1. In AWS Console, search for **"Bedrock"**
+2. Click **"Amazon Bedrock"**
+
+### 3.2 Request Model Access
+1. In left menu, click **"Model access"**
+2. Click **"Request model access"** or **"Manage model access"**
+3. Find **"Claude 3 Haiku"** by Anthropic
+4. Click **"Request access"** or check the box if available
+5. If prompted, fill out use case:
+   - **Use case**: "Internal code review and analysis tool"
+   - **Company/Organization**: [Your company name]
+6. Click **"Next"** and **"Submit"**
+
+### 3.3 Wait for Approval and Test
+```bash
+# Wait 2-3 minutes, then test access
+aws bedrock list-foundation-models --region us-east-1 | grep claude
+
+# Test Claude 3 Haiku specifically
+aws bedrock-runtime invoke-model \
+    --model-id anthropic.claude-3-haiku-20240307-v1:0 \
+    --body '{"anthropic_version": "bedrock-2023-05-31", "max_tokens": 100, "messages": [{"role": "user", "content": "Write hello world in JavaScript"}]}' \
+    --region us-east-1 \
+    output.txt
+
+# Check the response
+cat output.txt
+```
+
+**✅ Checkpoint**: Claude 3 Haiku shows "Access granted" and returns valid JavaScript code
+
+---
+
 ## 🐳 Step 4: Create ECR Repository
 
 ### 4.1 Create Repository in CloudShell
@@ -244,14 +280,30 @@ aws iam attach-role-policy \
 
 ---
 
-## 🚀 Step 6: Create ECS Cluster
+## 🚀 Step 6: Create ECS Cluster and VPC Setup
 
-### 6.1 Handle ECS Service-Linked Role (Corporate Account)
+### 6.1 Get VPC Information (Required for ECS)
+```bash
+# Get your default VPC ID (most corporate accounts have one)
+export VPC_ID=$(aws ec2 describe-vpcs --filters "Name=is-default,Values=true" --query "Vpcs[0].VpcId" --output text)
+echo "Default VPC ID: $VPC_ID"
+
+# Get subnet IDs in the VPC (we'll need at least 2 for ECS)
+aws ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC_ID" --query "Subnets[*].[SubnetId,AvailabilityZone]" --output table
+
+# Save the first two subnet IDs for later use
+export SUBNET1=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC_ID" --query "Subnets[0].SubnetId" --output text)
+export SUBNET2=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC_ID" --query "Subnets[1].SubnetId" --output text)
+echo "Subnet 1: $SUBNET1"
+echo "Subnet 2: $SUBNET2"
+```
+
+### 6.2 Handle ECS Service-Linked Role (Corporate Account)
 ```bash
 # Check if ECS service-linked role already exists
 aws iam get-role --role-name AWSServiceRoleForECS
 
-# If it exists, you'll see role details - continue to step 6.2
+# If it exists, you'll see role details - continue to step 6.3
 # If it doesn't exist, you'll get "NoSuchEntity" error
 ```
 
@@ -261,9 +313,9 @@ aws iam get-role --role-name AWSServiceRoleForECS
 Send this to your IT team: "Please run: `aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com`"
 
 **Option B: Try creating cluster anyway (often works!)**
-Many corporate accounts already have this role created by IT. Skip to step 6.2.
+Many corporate accounts already have this role created by IT. Skip to step 6.3.
 
-### 6.2 Create Cluster in CloudShell
+### 6.3 Create Cluster in CloudShell
 ```bash
 # Create ECS cluster (simpler approach for corporate accounts)
 aws ecs create-cluster --cluster-name codereview-ai-cluster
@@ -278,48 +330,38 @@ aws ecs create-cluster --cluster-name codereview-ai-cluster
 aws ecs list-clusters
 ```
 
-### 6.3 Verify in Console
+### 6.4 Create Security Group for ECS
+```bash
+# Create security group for our ECS tasks
+aws ec2 create-security-group \
+    --group-name codereview-ai-sg \
+    --description "Security group for CodeReview AI ECS tasks" \
+    --vpc-id $VPC_ID
+
+# Get the security group ID
+export SG_ID=$(aws ec2 describe-security-groups --filters "Name=group-name,Values=codereview-ai-sg" --query "SecurityGroups[0].GroupId" --output text)
+echo "Security Group ID: $SG_ID"
+
+# Allow inbound traffic on port 5000 (our FastAPI app port)
+aws ec2 authorize-security-group-ingress \
+    --group-id $SG_ID \
+    --protocol tcp \
+    --port 5000 \
+    --cidr 0.0.0.0/0
+```
+
+### 6.5 Verify in Console
 1. In AWS Console, search for **"ECS"**
 2. Click **"Elastic Container Service"**
 3. You should see your `codereview-ai-cluster`
 
-**✅ Checkpoint**: ECS cluster shows "ACTIVE" status
+**✅ Checkpoint**: ECS cluster shows "ACTIVE" status and you have VPC/subnet information
 
 ---
 
-## ⚡ Step 7: Enable and Test Bedrock
+## 🔧 Step 7: Create Lambda Function
 
-### 7.1 Enable Bedrock Access
-1. In AWS Console, search for **"Bedrock"**
-2. Click **"Amazon Bedrock"**
-3. In left menu, click **"Model access"**
-4. Find **"Claude 3.7 Sonnet"** by Anthropic (you mentioned you have access)
-5. Verify it shows **"Access granted"**
-
-### 7.2 Test Bedrock in CloudShell
-```bash
-# Test Claude 3.7 Sonnet
-# Create and base64 encode the request body
-echo '{"anthropic_version": "bedrock-2023-05-31", "max_tokens": 100, "messages": [{"role": "user", "content": "Write a hello world in JavaScript"}]}' | base64 > request_encoded.txt
-
-# Then invoke the model with base64 encoded body
-aws bedrock-runtime invoke-model \
-    --model-id us.anthropic.claude-3-7-sonnet-20250219-v1:0 \
-    --body "$(cat request_encoded.txt)" \
-    --region us-east-1 \
-    output.txt
-
-# Check the response
-cat output.txt
-```
-
-**✅ Checkpoint**: Bedrock returns a valid JavaScript hello world response
-
----
-
-## 🔧 Step 8: Create Lambda Function
-
-### 8.1 Create Lambda Function in CloudShell
+### 7.1 Create Lambda Function in CloudShell
 ```bash
 # Create the Lambda function code
 cat > lambda_function.py << 'EOF'
@@ -403,7 +445,7 @@ aws lambda create-function \
     --region us-east-1
 ```
 
-### 8.2 Configure S3 Trigger (2 Steps Required)
+### 7.2 Configure S3 Trigger (2 Steps Required)
 
 **Step 1: Give S3 permission to invoke Lambda**
 ```bash
@@ -471,56 +513,59 @@ aws s3api put-bucket-notification-configuration \
 
 # 🌅 TOMORROW: Setup With Access Keys
 
-## 🔐 Step 9: Configure Local Development
+## 🔐 Step 8: Configure Local Development
 
-### 9.1 Get Access Keys from IT
+### 8.1 Get Access Keys from IT
 Ask your IT team for:
 - AWS Access Key ID
 - AWS Secret Access Key
 - Confirm the region (likely `us-east-1`)
 
-### 9.2 Set Up Local Environment
+### 8.2 Set Up Local Environment
 ```bash
 # In your CodeReview AI project directory
-# Install Python dependencies for AWS integration
-pip install boto3 python-dotenv
-
-# Create .env file
-cat > .env << 'EOF'
+# Create .env file with your actual values
+cat > .env << EOF
 # AWS Configuration
 AWS_ACCESS_KEY_ID=your_access_key_here
 AWS_SECRET_ACCESS_KEY=your_secret_key_here
 AWS_DEFAULT_REGION=us-east-1
 
 # S3 Configuration
-S3_BUCKET_NAME=your-bucket-name-here
+S3_BUCKET_NAME=$BUCKET_NAME
 
 # Bedrock Configuration
-BEDROCK_MODEL_ID=us.anthropic.claude-3-7-sonnet-20250219-v1:0
+BEDROCK_MODEL_ID=anthropic.claude-3-haiku-20240307-v1:0
 BEDROCK_REGION=us-east-1
 
 # ECS Configuration
 ECS_CLUSTER_NAME=codereview-ai-cluster
-ECS_SERVICE_NAME=backend-service
+ECS_SERVICE_NAME=codereview-ai-service
 ECS_TASK_DEFINITION=codereview-ai-backend
 
 # ECR Configuration  
-ECR_REPOSITORY_URI=your-account-id.dkr.ecr.us-east-1.amazonaws.com/codereview-ai-backend
+ECR_REPOSITORY_URI=$ECR_URI
 
 # Application Settings
 ENVIRONMENT=production
 USE_AWS_SERVICES=true
 PORT=5000
 EOF
+
+# IMPORTANT: You still need to replace your_access_key_here and your_secret_key_here
+# with the actual access keys from your IT team!
 ```
 
 ---
 
-## 🐳 Step 10: Build and Deploy Backend to ECS
+## 🐳 Step 9: Build and Deploy Backend to ECS
 
-### 10.1 Create FastAPI Backend Deployment Files
-Create `Dockerfile` (in your project root):
-```dockerfile
+### 9.1 Create Required Deployment Files
+
+**Create Dockerfile (in your project root):**
+```bash
+# Create the Dockerfile
+cat > Dockerfile << 'EOF'
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -538,26 +583,48 @@ COPY server/ ./server/
 
 EXPOSE 5000
 
+# Set environment variables
+ENV PORT=5000
+ENV PYTHONPATH=/app
+
 # Run the FastAPI application
 CMD ["python", "main.py"]
+EOF
 ```
 
-Update your `pyproject.toml` to include AWS dependencies:
-```toml
-[project]
-name = "codereview-ai"
-version = "1.0.0"
-dependencies = [
-    "fastapi",
-    "uvicorn", 
-    "boto3",
-    "pydantic",
-    "python-dotenv",
-    "python-multipart"
-]
+**Note**: Your `pyproject.toml` already has the correct AWS dependencies (boto3, fastapi, etc.)
+
+### 9.2 Build Frontend for Production
+```bash
+# Build the React frontend for production
+npm run build
+
+# Verify the build was created
+ls -la dist/public/
 ```
 
-Your existing `main.py` is already set up for AWS integration. Here's the enhanced version with full AWS support:
+### 9.3 Replace Placeholder Values
+Before proceeding, replace all placeholder values with your actual AWS resources:
+
+```bash
+# Get your AWS account ID
+export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+echo "AWS Account ID: $AWS_ACCOUNT_ID"
+
+# Get your bucket name (from step 2)
+export BUCKET_NAME="your-actual-bucket-name-here"  # REPLACE THIS!
+echo "Bucket Name: $BUCKET_NAME"
+
+# Create ECR repository URI
+export ECR_URI="$AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/codereview-ai-backend"
+echo "ECR URI: $ECR_URI"
+```
+
+**⚠️ IMPORTANT**: Replace `your-actual-bucket-name-here` with the actual bucket name you created in Step 2!
+
+### 9.4 Update Your AWS Integration Code
+
+Your existing `main.py` is already set up for AWS integration. Here's the key configuration that should already be there:
 ```python
 from fastapi import FastAPI, HTTPException
 import boto3
@@ -681,89 +748,114 @@ async def health_check():
     return {"status": "healthy"}
 ```
 
-### 10.2 Build and Push to ECR
+### 9.5 Build and Push to ECR
 ```bash
-# Get ECR login
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin your-account-id.dkr.ecr.us-east-1.amazonaws.com
+# Get ECR login (using our environment variable)
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_URI
 
-# Build image
-docker build -t codereview-ai-backend ./backend
+# Build image (from project root directory)
+docker build -t codereview-ai-backend .
 
 # Tag image
-docker tag codereview-ai-backend:latest your-account-id.dkr.ecr.us-east-1.amazonaws.com/codereview-ai-backend:latest
+docker tag codereview-ai-backend:latest $ECR_URI:latest
 
 # Push to ECR
-docker push your-account-id.dkr.ecr.us-east-1.amazonaws.com/codereview-ai-backend:latest
+docker push $ECR_URI:latest
+
+# Verify the push
+aws ecr describe-images --repository-name codereview-ai-backend --region us-east-1
 ```
 
-### 10.3 Create ECS Task Definition and Service
+### 9.6 Create CloudWatch Log Group First
 ```bash
-# Create task definition
+# Create CloudWatch log group (must be created before task definition)
+aws logs create-log-group --log-group-name /ecs/codereview-ai-backend --region us-east-1
+```
+
+### 9.7 Create ECS Task Definition
+```bash
+# Create task definition with correct values
 aws ecs register-task-definition \
     --family codereview-ai-backend \
     --network-mode awsvpc \
     --requires-compatibilities FARGATE \
     --cpu 512 \
     --memory 1024 \
-    --execution-role-arn arn:aws:iam::$(aws sts get-caller-identity --query Account --output text):role/CodeReviewAI-ECS-ExecutionRole \
-    --task-role-arn arn:aws:iam::$(aws sts get-caller-identity --query Account --output text):role/CodeReviewAI-ECS-ExecutionRole \
-    --container-definitions '[
+    --execution-role-arn arn:aws:iam::$AWS_ACCOUNT_ID:role/CodeReviewAI-ECS-ExecutionRole \
+    --task-role-arn arn:aws:iam::$AWS_ACCOUNT_ID:role/CodeReviewAI-ECS-ExecutionRole \
+    --container-definitions "[
         {
-            "name": "backend",
-            "image": "your-account-id.dkr.ecr.us-east-1.amazonaws.com/codereview-ai-backend:latest",
-            "portMappings": [
+            \"name\": \"backend\",
+            \"image\": \"$ECR_URI:latest\",
+            \"portMappings\": [
                 {
-                    "containerPort": 8000,
-                    "protocol": "tcp"
+                    \"containerPort\": 5000,
+                    \"protocol\": \"tcp\"
                 }
             ],
-            "environment": [
-                {"name": "AWS_REGION", "value": "us-east-1"},
-                {"name": "S3_BUCKET_NAME", "value": "your-bucket-name-here"}
+            \"environment\": [
+                {\"name\": \"AWS_REGION\", \"value\": \"us-east-1\"},
+                {\"name\": \"S3_BUCKET_NAME\", \"value\": \"$BUCKET_NAME\"},
+                {\"name\": \"USE_AWS_SERVICES\", \"value\": \"true\"},
+                {\"name\": \"PORT\", \"value\": \"5000\"}
             ],
-            "logConfiguration": {
-                "logDriver": "awslogs",
-                "options": {
-                    "awslogs-group": "/ecs/codereview-ai-backend",
-                    "awslogs-region": "us-east-1",
-                    "awslogs-stream-prefix": "ecs"
+            \"logConfiguration\": {
+                \"logDriver\": \"awslogs\",
+                \"options\": {
+                    \"awslogs-group\": \"/ecs/codereview-ai-backend\",
+                    \"awslogs-region\": \"us-east-1\",
+                    \"awslogs-stream-prefix\": \"ecs\"
                 }
             }
         }
-    ]'
+    ]"
+```
 
-# Create CloudWatch log group
-aws logs create-log-group --log-group-name /ecs/codereview-ai-backend --region us-east-1
+### 9.8 Create ECS Service
+```bash
+# Create ECS service (using the VPC info from Step 6)
+aws ecs create-service \
+    --cluster codereview-ai-cluster \
+    --service-name codereview-ai-service \
+    --task-definition codereview-ai-backend \
+    --desired-count 1 \
+    --launch-type FARGATE \
+    --network-configuration "awsvpcConfiguration={subnets=[$SUBNET1,$SUBNET2],securityGroups=[$SG_ID],assignPublicIp=ENABLED}"
+
+# Check service status
+aws ecs describe-services --cluster codereview-ai-cluster --services codereview-ai-service
 ```
 
 **✅ Checkpoint**: ECS task definition created and backend container ready
 
 ---
 
-## 🧪 Step 11: Test Complete Setup
+## 🧪 Step 10: Test Complete Setup
 
-### 11.1 Test Local to AWS Connection
+### 10.1 Test S3 Trigger
 ```bash
-# Test S3 upload
-echo "console.log('test');" > test.js
-aws s3 cp test.js s3://your-bucket-name/sessions/test/test.js
+# Test S3 trigger (replace with your actual bucket name)
+echo "console.log('hello world');" > test.js
+aws s3 cp test.js s3://$BUCKET_NAME/sessions/test-session/test.js
 
-# Check Lambda logs
+# Check Lambda logs (in another terminal or wait a moment)
 aws logs tail /aws/lambda/codereview-ai-processor --follow
+
+# Verify the file was uploaded
+aws s3 ls s3://$BUCKET_NAME/sessions/test-session/
 ```
 
-### 11.2 Test Your Application
-1. Update your `.env` file with real values
-2. Start your Python backend: `python main.py`
-3. Start your frontend: `npm run frontend` (runs on port 3000)
-4. Upload a code file
-5. Verify complete workflow:
-   - File uploads to S3
-   - Lambda triggers
-   - ECS task starts
-   - Analysis results appear
+### 10.2 Test Your Application
+1. Update your `.env` file with real access keys from IT
+2. Start your local application: `npm run dev` (serves frontend + backend on port 5000)
+3. Open your browser to `http://localhost:5000`
+4. Upload a code file and verify the complete workflow:
+   - File uploads to S3 ✓
+   - Lambda triggers ✓  
+   - Analysis processing ✓
+   - Results display ✓
 
-**✅ Final Checkpoint**: End-to-end analysis workflow complete with Claude 3.7 Sonnet
+**✅ Final Checkpoint**: End-to-end analysis workflow complete with Claude 3 Haiku
 
 ---
 
@@ -773,11 +865,11 @@ aws logs tail /aws/lambda/codereview-ai-processor --follow
 - S3: $0.10
 - Lambda: $0.05
 - ECS Fargate: $2.00
-- Bedrock (Claude 3.7 Sonnet): $1.50
-- **Total: ~$3.65/day or $110/month**
+- Bedrock (Claude 3 Haiku): $0.75
+- **Total: ~$2.90/day or $87/month**
 
 **Light Usage (2-3 analyses/day):**
-- **Total: ~$25-40/month**
+- **Total: ~$18-30/month**
 
 ---
 
@@ -786,353 +878,20 @@ aws logs tail /aws/lambda/codereview-ai-processor --follow
 **TODAY:**
 - [ ] Tested permissions in CloudShell
 - [ ] Created S3 bucket with proper configuration
+- [ ] Enabled Bedrock access with Claude 3 Haiku
 - [ ] Created ECR repository
 - [ ] Created IAM roles for ECS and Lambda
-- [ ] Created ECS cluster
-- [ ] Tested Bedrock access with Claude 3.7 Sonnet
+- [ ] Created ECS cluster with VPC/security group setup
 - [ ] Created Lambda function
+- [ ] Configured complete S3 → Lambda trigger
 
 **TOMORROW:**
 - [ ] Got access keys from IT
-- [ ] Set up local Python development environment
-- [ ] Updated existing FastAPI backend for AWS integration
-- [ ] Built and deployed Python backend container to ECS
-- [ ] Configured complete S3 → Lambda → ECS → Bedrock workflow
-- [ ] Tested end-to-end analysis with Python backend
+- [ ] Set up local development environment
+- [ ] Built frontend for production
+- [ ] Built and deployed backend container to ECS
+- [ ] Created ECS task definition and service
+- [ ] Tested complete S3 → Lambda → Bedrock workflow
+- [ ] Verified end-to-end analysis functionality
 
-**🎉 Success!** Your CodeReview AI is running on AWS with Claude 3.7 Sonnet!
-
-## ⚡ Step 3: Enable Amazon Bedrock (UI Method)
-
-### 3.1 Access Bedrock
-1. In AWS Console, search for **"Bedrock"**
-2. Click **"Amazon Bedrock"**
-
-### 3.2 Request Model Access
-1. In left menu, click **"Model access"**
-2. Click **"Request model access"** or **"Manage model access"**
-3. Find **"Claude 3 Haiku"** by Anthropic
-4. Click **"Request access"** or check the box if available
-5. If prompted, fill out use case:
-   - **Use case**: "Internal code review and analysis tool"
-   - **Company/Organization**: [Your company name]
-6. Click **"Next"** and **"Submit"**
-
-### 3.3 Wait for Approval
-- Claude 3 Haiku usually gets approved instantly for corporate accounts
-- Refresh the page after 2-3 minutes
-- Status should show **"Access granted"**
-
-**✅ Checkpoint**: Claude 3 Haiku shows "Access granted" in Model access page
-
----
-
-## 🔧 Step 4: Create Lambda Function (UI Method)
-
-### 4.1 Create the Function
-1. Search for **"Lambda"** in AWS Console
-2. Click **"Create function"**
-3. Choose **"Author from scratch"**
-4. **Function name**: `codereview-ai-processor`
-5. **Runtime**: Python 3.11
-6. **Architecture**: x86_64
-7. **Execution role**: 
-   - If you can choose: "Create a new role with basic Lambda permissions"
-   - If restricted: Use existing role (ask IT which one to use)
-8. Click **"Create function"**
-
-### 4.2 Add Function Code
-1. In the **Code** tab, replace the default code with:
-
-```python
-import json
-import boto3
-import logging
-import os
-from datetime import datetime
-
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-
-# Initialize AWS clients
-s3_client = boto3.client('s3')
-bedrock_client = boto3.client('bedrock-runtime', region_name=os.environ.get('AWS_REGION', 'us-east-1'))
-
-def lambda_handler(event, context):
-    """
-    Process uploaded code files and perform AI analysis
-    """
-    try:
-        logger.info(f"Received event: {json.dumps(event)}")
-        
-        # Handle S3 trigger event
-        if 'Records' in event:
-            for record in event['Records']:
-                bucket = record['s3']['bucket']['name']
-                key = record['s3']['object']['key']
-                
-                logger.info(f"Processing file: {key} from bucket: {bucket}")
-                
-                # Download file from S3
-                try:
-                    response = s3_client.get_object(Bucket=bucket, Key=key)
-                    file_content = response['Body'].read().decode('utf-8')
-                    
-                    # Perform AI analysis
-                    analysis_result = analyze_code_with_bedrock(file_content, key)
-                    
-                    # Save analysis result back to S3
-                    result_key = key.replace('sessions/', 'results/').replace('.', '_analysis.')
-                    s3_client.put_object(
-                        Bucket=bucket,
-                        Key=result_key + '.json',
-                        Body=json.dumps(analysis_result),
-                        ContentType='application/json'
-                    )
-                    
-                    logger.info(f"Analysis completed for {key}")
-                    
-                except Exception as e:
-                    logger.error(f"Error processing file {key}: {str(e)}")
-                    continue
-        
-        return {
-            'statusCode': 200,
-            'body': json.dumps('Processing completed successfully')
-        }
-        
-    except Exception as e:
-        logger.error(f"Lambda execution error: {str(e)}")
-        return {
-            'statusCode': 500,
-            'body': json.dumps(f'Error: {str(e)}')
-        }
-
-def analyze_code_with_bedrock(code_content, filename):
-    """
-    Analyze code using Amazon Bedrock Claude model
-    """
-    try:
-        prompt = f"""
-        Please analyze this code file and provide a comprehensive review:
-
-        Filename: {filename}
-        Code:
-        ```
-        {code_content}
-        ```
-
-        Please provide:
-        1. Overall code quality assessment
-        2. Potential issues or bugs
-        3. Security considerations
-        4. Performance improvements
-        5. Best practice recommendations
-        6. Code style suggestions
-
-        Format your response as JSON with the following structure:
-        {{
-            "overall_score": 85,
-            "summary": "Brief summary",
-            "issues": [
-                {{"type": "error", "line": 15, "message": "Issue description", "suggestion": "How to fix"}}
-            ],
-            "recommendations": ["List of general recommendations"]
-        }}
-        """
-        
-        body = {
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": 4000,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
-        }
-        
-        response = bedrock_client.invoke_model(
-            modelId="anthropic.claude-3-haiku-20240307-v1:0",
-            body=json.dumps(body)
-        )
-        
-        response_body = json.loads(response['body'].read())
-        analysis_text = response_body['content'][0]['text']
-        
-        # Try to parse as JSON, fallback to text if not valid JSON
-        try:
-            analysis_result = json.loads(analysis_text)
-        except:
-            analysis_result = {
-                "overall_score": 75,
-                "summary": "Analysis completed",
-                "analysis_text": analysis_text,
-                "issues": [],
-                "recommendations": ["Review the detailed analysis above"]
-            }
-        
-        return analysis_result
-        
-    except Exception as e:
-        logger.error(f"Bedrock analysis error: {str(e)}")
-        return {
-            "overall_score": 0,
-            "summary": "Analysis failed",
-            "error": str(e),
-            "issues": [],
-            "recommendations": ["Please check the logs for error details"]
-        }
-```
-
-2. Click **"Deploy"** to save the function
-
-### 4.3 Configure Environment Variables
-1. Click **"Configuration"** tab
-2. Click **"Environment variables"** on the left
-3. Click **"Edit"**
-4. Add these variables:
-   - `AWS_REGION`: `us-east-1` (or your company's region)
-   - `S3_BUCKET_NAME`: `your-bucket-name-here`
-5. Click **"Save"**
-
-### 4.4 Add S3 Trigger
-1. Click **"Add trigger"**
-2. Select **"S3"**
-3. **Bucket**: Choose your bucket
-4. **Event type**: "All object create events"
-5. **Prefix**: `sessions/` (only trigger for uploaded files)
-6. **Suffix**: Leave empty
-7. Click **"Add"**
-
-### 4.5 Update Permissions
-1. Click **"Configuration"** → **"Permissions"**
-2. Click on the execution role name (blue link)
-3. In the IAM console, click **"Add permissions"** → **"Attach policies"**
-4. Search and attach these policies:
-   - `AmazonS3FullAccess`
-   - `AmazonBedrockFullAccess`
-   - `CloudWatchLogsFullAccess`
-5. Click **"Add permissions"**
-
-**✅ Checkpoint**: Lambda function shows "Active" status and S3 trigger is configured
-
----
-
-## 🔐 Step 5: Configure Your Application
-
-### 5.1 Create Environment File
-In your CodeReview AI project, create a `.env` file:
-
-```bash
-# AWS Configuration
-AWS_ACCESS_KEY_ID=your_access_key_here
-AWS_SECRET_ACCESS_KEY=your_secret_key_here
-AWS_DEFAULT_REGION=us-east-1
-
-# S3 Configuration
-S3_BUCKET_NAME=your-actual-bucket-name
-
-# Bedrock Configuration
-BEDROCK_MODEL_ID=anthropic.claude-3-haiku-20240307-v1:0
-BEDROCK_REGION=us-east-1
-
-# Application Settings
-NODE_ENV=production
-USE_AWS_SERVICES=true
-```
-
-### 5.2 Update Credentials
-1. Replace `your_access_key_here` with your AWS Access Key ID
-2. Replace `your_secret_key_here` with your AWS Secret Access Key
-3. Replace `your-actual-bucket-name` with your S3 bucket name
-
-**⚠️ Security**: Never commit this `.env` file to version control!
-
----
-
-## 🧪 Step 6: Test Your Setup
-
-### 6.1 Test S3 Upload
-1. In AWS Console, go to your S3 bucket
-2. Click **"Upload"**
-3. Upload a test JavaScript file to folder `sessions/test/`
-4. Check that the Lambda function was triggered in CloudWatch logs
-
-### 6.2 Check Lambda Logs
-1. Go to **CloudWatch** in AWS Console
-2. Click **"Logs"** → **"Log groups"**
-3. Find `/aws/lambda/codereview-ai-processor`
-4. Check for recent execution logs
-
-### 6.3 Test Your Application
-1. Start your app: `npm run dev`
-2. Upload a code file
-3. Verify it appears in S3 under `sessions/`
-4. Check for analysis results in S3 under `results/`
-
-**✅ Checkpoint**: Files upload successfully and analysis results appear
-
----
-
-## 💰 Cost Management
-
-### Expected Costs (Corporate Account):
-- **S3**: $1-2/month (file storage)
-- **Lambda**: $0-1/month (execution time)
-- **Bedrock**: $2-5/month (Claude API calls)
-- **Total**: $3-8/month
-
-### Monitor Usage:
-1. AWS Console → **"Billing and Cost Management"**
-2. Set up budget alerts if allowed
-3. Monitor usage in **"Cost Explorer"**
-
----
-
-## 🆘 Troubleshooting
-
-### Common Corporate Account Issues:
-
-**Permission Denied Errors:**
-- Contact your IT team to add required permissions
-- Ask for policies: S3FullAccess, LambdaFullAccess, BedrockFullAccess
-
-**Can't Create IAM Roles:**
-- Ask IT to create the Lambda execution role for you
-- Provide them the policy requirements from this guide
-
-**Region Restrictions:**
-- Use your company's approved AWS region
-- Update all configurations to match
-
-**Bedrock Not Available:**
-- Check if Bedrock is enabled in your region
-- Ask IT to request Bedrock access for your account
-
----
-
-## ✅ Completion Checklist
-
-- [ ] Got AWS credentials from IT or created access keys
-- [ ] Created S3 bucket with CORS and lifecycle policies
-- [ ] Enabled Bedrock with Claude 3 Haiku access
-- [ ] Created Lambda function with proper code and permissions
-- [ ] Configured S3 trigger for Lambda
-- [ ] Set up environment variables in your application
-- [ ] Tested file upload and processing workflow
-- [ ] Verified analysis results appear in S3
-
-**🎉 Success!** Your CodeReview AI is now running on your corporate AWS account!
-
----
-
-## 📞 Need Help?
-
-If you encounter corporate account restrictions:
-1. **Contact your IT/DevOps team** with specific permission requirements
-2. **Share this guide** with them to show what permissions are needed
-3. **Ask for help** with service quotas or region restrictions
-4. **Test incrementally** - verify each service works before moving to the next
-
-Remember: Corporate AWS accounts often have guardrails, but most permissions can be granted by your IT team.
+**🎉 Success!** Your CodeReview AI is running on AWS with Claude 3 Haiku!
