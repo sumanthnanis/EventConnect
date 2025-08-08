@@ -21,59 +21,193 @@ bedrock_client = boto3.client('bedrock-runtime', region_name=REGION)
 lambda_client = boto3.client('lambda', region_name=REGION)
 
 def create_test_files():
-    """Create sample code files for testing"""
+    """Create sample code files for testing - Folder with interdependent files"""
     files = {
-        "buggy_example.js": '''// Buggy JavaScript code for testing
-function calculateTotal(items) {
-    let total = 0;
-    for (let i = 0; i <= items.length; i++) {  // BUG: off-by-one error
-        total += items[i].price;
-    }
-    return total;
-}
+        "UserProfile.jsx": '''// React component with multiple issues
+import React, { useState, useEffect } from 'react';
+import { getUserData, formatUserName } from './userHelpers';  // Dependencies
+import { updateProfile, deleteUser } from './apiRoutes';  // API dependency
 
-const userData = getUserData();  // Missing error handling
-console.log(userData.name);
+const UserProfile = ({ userId }) => {
+    const [user, setUser] = useState();  // BUG: should be null, not undefined
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    
+    useEffect(() => {
+        // BUG: Missing dependency array - infinite loop
+        loadUser();
+    });
+    
+    const loadUser = async () => {
+        setLoading(true);
+        
+        // BUG: No error handling for async operation
+        const userData = await getUserData(userId);
+        setUser(userData);
+        setLoading(false);  // BUG: Won't execute if getUserData throws
+    };
+    
+    const handleSave = () => {
+        // BUG: No validation before save
+        updateProfile(user);
+        
+        // BUG: Password stored in plain text
+        if (user.password) {
+            localStorage.setItem('userPassword', user.password);
+        }
+    };
+    
+    const handleDelete = () => {
+        // BUG: No confirmation dialog - dangerous!
+        deleteUser(userId);
+        // BUG: No navigation after delete
+    };
+    
+    // BUG: No loading state handling
+    if (loading) return null;
+    
+    return (
+        <div className="user-profile">
+            <h1>{formatUserName(user.firstName, user.lastName)}</h1>
+            {/* BUG: Accessing user properties without null check */}
+            <p>Email: {user.email}</p>
+            <p>Role: {user.role}</p>
+            
+            {/* BUG: Inline styles instead of CSS classes */}
+            <button 
+                onClick={handleSave}
+                style={{backgroundColor: 'blue', color: 'white'}}
+            >
+                Save Changes
+            </button>
+            
+            {/* BUG: Dangerous delete with no confirmation */}
+            <button onClick={handleDelete}>Delete Account</button>
+        </div>
+    );
+};
 
-// Unused import would be here
-import { unusedFunction } from './utils';
+export default UserProfile;
 ''',
         
-        "good_example.py": '''# Well-written Python code for testing
-from typing import List, Optional
-import logging
+        "userHelpers.js": '''// Helper functions with various issues
+import axios from 'axios';
 
-logger = logging.getLogger(__name__)
+// BUG: No input validation
+export const getUserData = async (userId) => {
+    // BUG: Hardcoded API URL
+    const response = await axios.get(`http://localhost:3000/api/users/${userId}`);
+    return response.data;
+    // BUG: No error handling for network failures
+};
 
-class DataProcessor:
-    """A well-structured data processor with proper error handling."""
-    
-    def __init__(self, config: dict):
-        self.config = config
+// BUG: Function doesn't handle null/undefined inputs
+export const formatUserName = (firstName, lastName) => {
+    return firstName + ' ' + lastName;  // Will return "undefined undefined" if null
+};
+
+// BUG: Synchronous function that should be async
+export const validateEmail = (email) => {
+    // BUG: Weak email regex
+    return email.includes('@');
+};
+
+// BUG: Function name doesn't match what it does
+export const checkPassword = (password) => {
+    // BUG: Weak password validation
+    return password.length > 5;  // Should be 8+ and require complexity
+};
+
+// BUG: Memory leak - event listener never removed
+export const setupUserTracking = (userId) => {
+    window.addEventListener('beforeunload', () => {
+        // BUG: Synchronous API call in beforeunload
+        fetch('/api/track-exit', {
+            method: 'POST',
+            body: JSON.stringify({ userId, timestamp: Date.now() })
+        });
+    });
+};
+
+// BUG: Unused function
+export const debugUser = (user) => {
+    console.log('User debug:', user);  // Should not be in production
+};
+
+// BUG: Global variable pollution
+window.userCache = {};
+
+// BUG: Missing JSDoc comments for public functions
+export const calculateUserAge = (birthDate) => {
+    return new Date().getFullYear() - new Date(birthDate).getFullYear();
+    // BUG: Doesn't account for birth month/day
+};''',
         
-    def process_items(self, items: List[dict]) -> Optional[dict]:
-        """Process a list of items with proper error handling."""
-        try:
-            if not items:
-                logger.warning("No items provided for processing")
-                return None
-                
-            total_value = sum(item.get('value', 0) for item in items)
-            
-            return {
-                'total_items': len(items),
-                'total_value': total_value,
-                'average_value': total_value / len(items) if items else 0
-            }
-            
-        except Exception as e:
-            logger.error(f"Error processing items: {e}")
-            raise
-            
-    def validate_item(self, item: dict) -> bool:
-        """Validate a single item."""
-        required_fields = ['id', 'value']
-        return all(field in item for field in required_fields)
+        "apiRoutes.js": '''// API routes with security and error handling issues
+const express = require('express');
+const router = express.Router();
+
+// BUG: No authentication middleware
+router.get('/users/:id', (req, res) => {
+    const userId = req.params.id;
+    
+    // BUG: SQL injection vulnerability
+    const query = `SELECT * FROM users WHERE id = ${userId}`;
+    
+    // BUG: No input validation
+    db.query(query, (err, results) => {
+        if (err) {
+            // BUG: Exposing internal error details
+            res.status(500).json({ error: err.message });
+        } else {
+            // BUG: Returning sensitive data (password hash, etc.)
+            res.json(results[0]);
+        }
+    });
+});
+
+// BUG: No rate limiting
+router.post('/users/:id/update', (req, res) => {
+    const userId = req.params.id;
+    const userData = req.body;
+    
+    // BUG: No authorization check - any user can update any profile
+    // BUG: No input sanitization
+    const query = `UPDATE users SET 
+        email = '${userData.email}', 
+        firstName = '${userData.firstName}',
+        lastName = '${userData.lastName}'
+        WHERE id = ${userId}`;
+    
+    db.query(query, (err, result) => {
+        if (err) {
+            res.status(500).send('Update failed');
+        } else {
+            // BUG: No logging of data changes
+            res.json({ success: true });
+        }
+    });
+});
+
+router.delete('/users/:id', (req, res) => {
+    const userId = req.params.id;
+    
+    // BUG: No confirmation required for destructive action
+    // BUG: No soft delete - permanent data loss
+    // BUG: No cascading delete handling
+    const query = `DELETE FROM users WHERE id = ${userId}`;
+    
+    db.query(query, (err, result) => {
+        // BUG: No error handling
+        res.json({ deleted: true });
+    });
+});
+
+// BUG: No CORS configuration
+// BUG: No request logging middleware
+// BUG: No error handling middleware
+
+module.exports = router;
 '''
     }
     return files
