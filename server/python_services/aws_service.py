@@ -9,14 +9,13 @@ from typing import List, Dict, Any, Optional
 import boto3
 from botocore.exceptions import ClientError
 
-BUCKET_NAME = os.environ.get('S3_BUCKET_NAME', 'codereview-ai-files')
-is_development = os.environ.get('NODE_ENV') == 'development'
+BUCKET_NAME = os.environ.get('S3_BUCKET_NAME', 'codereview-ai-files-108782072033')
 
-# Configure AWS SDK only if credentials are available
+# Configure AWS SDK
 s3_client = None
 bedrock_client = None
 
-if not is_development and os.environ.get('AWS_ACCESS_KEY_ID'):
+if os.environ.get('AWS_ACCESS_KEY_ID'):
     try:
         s3_client = boto3.client(
             's3',
@@ -41,10 +40,8 @@ class AwsService:
         """Upload file to S3 and return the key"""
         key = f"sessions/{session_id}/{int(time.time() * 1000)}-{filename}"
         
-        if is_development or not s3_client:
-            # In development mode, simulate S3 upload
-            print(f"[DEV] Simulating S3 upload for file: {filename}")
-            return key
+        if not s3_client:
+            raise Exception('S3 client not configured. Please check AWS credentials.')
         
         try:
             s3_client.put_object(
@@ -65,15 +62,8 @@ class AwsService:
     
     async def get_file_from_s3(self, s3_key: str) -> str:
         """Download file content from S3"""
-        if is_development or not s3_client:
-            # In development mode, return mock file content
-            print(f"[DEV] Simulating S3 download for key: {s3_key}")
-            return f"""// Mock file content for {s3_key}
-function exampleFunction() {{
-  let userName = 'default';
-  const result = await apiCall();
-  return result;
-}}"""
+        if not s3_client:
+            raise Exception('S3 client not configured. Please check AWS credentials.')
         
         try:
             response = s3_client.get_object(Bucket=BUCKET_NAME, Key=s3_key)
@@ -84,9 +74,8 @@ function exampleFunction() {{
     
     async def delete_file_from_s3(self, s3_key: str) -> None:
         """Delete file from S3"""
-        if is_development or not s3_client:
-            print(f"[DEV] Simulating S3 delete for key: {s3_key}")
-            return
+        if not s3_client:
+            raise Exception('S3 client not configured. Please check AWS credentials.')
         
         try:
             s3_client.delete_object(Bucket=BUCKET_NAME, Key=s3_key)
@@ -96,9 +85,8 @@ function exampleFunction() {{
     
     async def analyze_code_with_bedrock(self, file_contents: List[str], file_names: List[str]) -> Dict[str, Any]:
         """Analyze code using Amazon Bedrock"""
-        if is_development or not bedrock_client:
-            print(f"[DEV] Simulating Bedrock analysis for {len(file_names)} files")
-            return self._generate_mock_analysis(file_names)
+        if not bedrock_client:
+            raise Exception('Bedrock client not configured. Please check AWS credentials.')
         
         prompt = self._build_analysis_prompt(file_contents, file_names)
         
@@ -130,56 +118,6 @@ function exampleFunction() {{
             print('Bedrock analysis error:', error)
             raise Exception('Failed to analyze code with Bedrock')
     
-    def _generate_mock_analysis(self, file_names: List[str]) -> Dict[str, Any]:
-        """Generate mock analysis result for development"""
-        issues = [
-            {
-                "type": "warning",
-                "severity": "medium",
-                "title": "Missing error handling",
-                "description": "Function does not handle potential errors from async operations",
-                "file": file_names[0],
-                "line": 15,
-                "code": "const result = await apiCall();",
-                "suggestion": "try { const result = await apiCall(); } catch (error) { console.error(error); }"
-            },
-            {
-                "type": "suggestion",
-                "severity": "low",
-                "title": "Consider using const instead of let",
-                "description": "Variable is never reassigned, consider using const for better immutability",
-                "file": file_names[0],
-                "line": 8,
-                "code": "let userName = 'default';",
-                "suggestion": "const userName = 'default';"
-            },
-            {
-                "type": "success",
-                "severity": "low",
-                "title": "Good use of TypeScript interfaces",
-                "description": "Proper type definitions improve code maintainability",
-                "file": file_names[0]
-            }
-        ]
-        
-        if len(file_names) > 1:
-            issues.append({
-                "type": "error",
-                "severity": "high",
-                "title": "Unused import statement",
-                "description": "Import is declared but never used in the module",
-                "file": file_names[1],
-                "line": 3,
-                "code": "import { unusedFunction } from './utils';",
-                "suggestion": "Remove the unused import or use the function"
-            })
-        
-        return {
-            "passedChecks": 8,
-            "warnings": 2,
-            "errors": 1 if len(file_names) > 1 else 0,
-            "issues": issues
-        }
     
     def _build_analysis_prompt(self, file_contents: List[str], file_names: List[str]) -> str:
         """Build the prompt for code analysis"""
@@ -270,9 +208,8 @@ Please provide a thorough analysis and return only the JSON response.
     
     async def generate_presigned_url(self, key: str, expires_in: int = 3600) -> str:
         """Generate presigned URL for file access"""
-        if is_development or not s3_client:
-            print(f"[DEV] Simulating presigned URL for key: {key}")
-            return f"https://mock-s3-url.example.com/{key}?expires={expires_in}"
+        if not s3_client:
+            raise Exception('S3 client not configured. Please check AWS credentials.')
         
         try:
             return s3_client.generate_presigned_url(

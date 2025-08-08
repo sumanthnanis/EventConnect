@@ -95,56 +95,6 @@ class FileProcessor:
         # Update to analyzing status
         await storage.update_file_analysis(file_id, {'status': 'analyzing'})
     
-    def _generate_mock_analysis(self, file_names: List[str]) -> Dict[str, Any]:
-        """Generate mock analysis result"""
-        issues = [
-            {
-                "type": "warning",
-                "severity": "medium",
-                "title": "Missing error handling",
-                "description": "Function does not handle potential errors from async operations",
-                "file": file_names[0],
-                "line": 15,
-                "code": "const result = await apiCall();",
-                "suggestion": "try { const result = await apiCall(); } catch (error) { console.error(error); }"
-            },
-            {
-                "type": "suggestion",
-                "severity": "low",
-                "title": "Consider using const instead of let",
-                "description": "Variable is never reassigned, consider using const for better immutability",
-                "file": file_names[0],
-                "line": 8,
-                "code": "let userName = 'default';",
-                "suggestion": "const userName = 'default';"
-            },
-            {
-                "type": "success",
-                "severity": "low",
-                "title": "Good use of TypeScript interfaces",
-                "description": "Proper type definitions improve code maintainability",
-                "file": file_names[0]
-            }
-        ]
-        
-        if len(file_names) > 1:
-            issues.append({
-                "type": "error",
-                "severity": "high",
-                "title": "Unused import statement",
-                "description": "Import is declared but never used in the module",
-                "file": file_names[1],
-                "line": 3,
-                "code": "import { unusedFunction } from './utils';",
-                "suggestion": "Remove the unused import or use the function"
-            })
-        
-        return {
-            "passedChecks": 8,
-            "warnings": 2,
-            "errors": 1 if len(file_names) > 1 else 0,
-            "issues": issues
-        }
     
     def _distribute_issues_across_files(self, analysis_result: Dict[str, Any], file_names: List[str]) -> Dict[str, Dict[str, Any]]:
         """Distribute issues across files"""
