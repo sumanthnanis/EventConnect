@@ -225,7 +225,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
     setUploadedFiles(prev => prev.filter(f => f.id !== id));
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (uploadedFiles.length === 0) {
       toast({
         title: "No files selected",
@@ -235,7 +235,50 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       return;
     }
 
-    uploadMutation.mutate(uploadedFiles.map(f => f.file));
+    // Simple direct test first
+    console.log('=== TESTING DIRECT UPLOAD ===');
+    try {
+      const testFile = uploadedFiles[0].file;
+      console.log('Test file:', testFile.name, testFile.size);
+      
+      const formData = new FormData();
+      formData.append('files', testFile);
+      formData.append('uploadType', uploadType);
+      
+      console.log('Making direct fetch request...');
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      console.log('Direct response status:', response.status);
+      console.log('Direct response ok:', response.ok);
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Direct upload SUCCESS:', result);
+        toast({
+          title: "Upload successful",
+          description: "File uploaded successfully",
+        });
+        onUploadComplete(result.sessionId);
+      } else {
+        const errorText = await response.text();
+        console.error('Direct upload FAILED:', response.status, errorText);
+        toast({
+          title: "Upload failed",
+          description: `Error: ${response.status} ${errorText}`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Direct upload ERROR:', error);
+      toast({
+        title: "Upload failed",
+        description: `Network error: ${(error as Error).message}`,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDemoUpload = () => {
