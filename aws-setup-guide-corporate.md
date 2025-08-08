@@ -403,9 +403,11 @@ aws lambda create-function \
     --region us-east-1
 ```
 
-### 8.2 Configure S3 Trigger
+### 8.2 Configure S3 Trigger (2 Steps Required)
+
+**Step 1: Give S3 permission to invoke Lambda**
 ```bash
-# Add S3 trigger permission
+# Add S3 trigger permission (replace your-bucket-name-here with actual bucket name)
 aws lambda add-permission \
     --function-name codereview-ai-processor \
     --principal s3.amazonaws.com \
@@ -416,7 +418,54 @@ aws lambda add-permission \
 # You'll need to replace 'your-bucket-name-here' with your actual bucket name
 ```
 
-**✅ Checkpoint**: Lambda function shows "Active" status in console
+**Step 2: Create S3 Event Notification (UI Method - Easier)**
+1. In AWS Console, go to **S3**
+2. Click on your bucket name (the one you created in step 2)
+3. Click **"Properties"** tab
+4. Scroll down to **"Event notifications"** section
+5. Click **"Create event notification"**
+6. Fill in the details:
+   - **Name**: `codereview-ai-trigger`
+   - **Event types**: Check **"All object create events"** (or specifically PUT, POST, COPY)
+   - **Destination**: Select **"Lambda function"**
+   - **Lambda function**: Choose `codereview-ai-processor`
+7. Click **"Save changes"**
+
+**Alternative: CLI Method for Event Notification**
+```bash
+# Create event notification configuration
+cat > notification-config.json << 'EOF'
+{
+    "LambdaConfigurations": [
+        {
+            "Id": "CodeReviewAITrigger",
+            "LambdaFunctionArn": "arn:aws:lambda:us-east-1:ACCOUNT-ID:function:codereview-ai-processor",
+            "Events": ["s3:ObjectCreated:*"],
+            "Filter": {
+                "Key": {
+                    "FilterRules": [
+                        {
+                            "Name": "prefix",
+                            "Value": "sessions/"
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}
+EOF
+
+# Apply the notification configuration (replace ACCOUNT-ID and BUCKET-NAME)
+aws s3api put-bucket-notification-configuration \
+    --bucket your-bucket-name-here \
+    --notification-configuration file://notification-config.json
+```
+
+**✅ Checkpoint**: 
+- Lambda function shows "Active" status in console
+- S3 bucket shows event notification under Properties → Event notifications
+- Lambda function shows S3 trigger under Configuration → Triggers
 
 ---
 
