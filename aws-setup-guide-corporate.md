@@ -282,20 +282,24 @@ aws iam attach-role-policy \
 
 ## 🚀 Step 6: Create ECS Cluster and VPC Setup
 
-### 6.1 Get VPC Information (Required for ECS)
+### 6.1 Set Your AWS Resources (Pre-configured)
 ```bash
-# Get your default VPC ID (most corporate accounts have one)
-export VPC_ID=$(aws ec2 describe-vpcs --filters "Name=is-default,Values=true" --query "Vpcs[0].VpcId" --output text)
-echo "Default VPC ID: $VPC_ID"
+# Your specific AWS resources (ready to use)
+export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+export BUCKET_NAME="codereview-ai-files-108782072033"
+export SUBNET1="subnet-0243daa28b46c8873"
+export SUBNET2="subnet-0fc73c07d9bef52b9"
+export ECR_URI="$AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/codereview-ai-backend"
 
-# Get subnet IDs in the VPC (we'll need at least 2 for ECS)
-aws ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC_ID" --query "Subnets[*].[SubnetId,AvailabilityZone]" --output table
-
-# Save the first two subnet IDs for later use
-export SUBNET1=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC_ID" --query "Subnets[0].SubnetId" --output text)
-export SUBNET2=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC_ID" --query "Subnets[1].SubnetId" --output text)
+echo "AWS Account ID: $AWS_ACCOUNT_ID"
+echo "S3 Bucket: $BUCKET_NAME"
 echo "Subnet 1: $SUBNET1"
 echo "Subnet 2: $SUBNET2"
+echo "ECR URI: $ECR_URI"
+
+# Get VPC ID from your subnets
+export VPC_ID=$(aws ec2 describe-subnets --subnet-ids $SUBNET1 --query "Subnets[0].VpcId" --output text)
+echo "VPC ID: $VPC_ID"
 ```
 
 ### 6.2 Handle ECS Service-Linked Role (Corporate Account)
@@ -449,25 +453,24 @@ aws lambda create-function \
 
 **Step 1: Give S3 permission to invoke Lambda**
 ```bash
-# Add S3 trigger permission (replace your-bucket-name-here with actual bucket name)
+# Add S3 trigger permission
 aws lambda add-permission \
     --function-name codereview-ai-processor \
     --principal s3.amazonaws.com \
     --action lambda:InvokeFunction \
     --statement-id s3-trigger \
-    --source-arn arn:aws:s3:::your-bucket-name-here
-
-# You'll need to replace 'your-bucket-name-here' with your actual bucket name
+    --source-arn arn:aws:s3:::codereview-ai-files-108782072033
 ```
 
 **Step 2: Create S3 Event Notification (UI Method - Easier)**
 1. In AWS Console, go to **S3**
-2. Click on your bucket name (the one you created in step 2)
+2. Click on bucket **"codereview-ai-files-108782072033"**
 3. Click **"Properties"** tab
 4. Scroll down to **"Event notifications"** section
 5. Click **"Create event notification"**
 6. Fill in the details:
    - **Name**: `codereview-ai-trigger`
+   - **Prefix**: `sessions/` (only trigger for uploaded files)
    - **Event types**: Check **"All object create events"** (or specifically PUT, POST, COPY)
    - **Destination**: Select **"Lambda function"**
    - **Lambda function**: Choose `codereview-ai-processor`
@@ -498,9 +501,13 @@ cat > notification-config.json << 'EOF'
 }
 EOF
 
-# Apply the notification configuration (replace ACCOUNT-ID and BUCKET-NAME)
+# Replace ACCOUNT-ID and apply the notification configuration
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+sed -i "s/ACCOUNT-ID/$ACCOUNT_ID/g" notification-config.json
+
+# Apply the notification configuration
 aws s3api put-bucket-notification-configuration \
-    --bucket your-bucket-name-here \
+    --bucket codereview-ai-files-108782072033 \
     --notification-configuration file://notification-config.json
 ```
 
@@ -515,24 +522,24 @@ aws s3api put-bucket-notification-configuration \
 
 ## 🔐 Step 8: Configure Local Development
 
-### 8.1 Get Access Keys from IT
-Ask your IT team for:
-- AWS Access Key ID
-- AWS Secret Access Key
-- Confirm the region (likely `us-east-1`)
+### 8.1 Your Access Keys (Pre-configured)
+Your AWS access keys are ready to use:
+- **AWS Access Key ID**: `AWS_API_KEY`
+- **AWS Secret Access Key**: `TphZYjJIiof1mPBU5BhoQGUwbq6EtwRbmP/P0ZrG`
+- **Region**: `us-east-1`
 
 ### 8.2 Set Up Local Environment
 ```bash
 # In your CodeReview AI project directory
-# Create .env file with your actual values
+# Create .env file with your actual credentials
 cat > .env << EOF
 # AWS Configuration
-AWS_ACCESS_KEY_ID=your_access_key_here
-AWS_SECRET_ACCESS_KEY=your_secret_key_here
+AWS_ACCESS_KEY_ID=AWS_API_KEY
+AWS_SECRET_ACCESS_KEY=TphZYjJIiof1mPBU5BhoQGUwbq6EtwRbmP/P0ZrG
 AWS_DEFAULT_REGION=us-east-1
 
 # S3 Configuration
-S3_BUCKET_NAME=$BUCKET_NAME
+S3_BUCKET_NAME=codereview-ai-files-108782072033
 
 # Bedrock Configuration
 BEDROCK_MODEL_ID=anthropic.claude-3-haiku-20240307-v1:0
@@ -551,9 +558,6 @@ ENVIRONMENT=production
 USE_AWS_SERVICES=true
 PORT=5000
 EOF
-
-# IMPORTANT: You still need to replace your_access_key_here and your_secret_key_here
-# with the actual access keys from your IT team!
 ```
 
 ---
@@ -603,24 +607,19 @@ npm run build
 ls -la dist/public/
 ```
 
-### 9.3 Replace Placeholder Values
-Before proceeding, replace all placeholder values with your actual AWS resources:
+### 9.3 Set Your Resource Variables (Pre-configured)
+Your AWS resources are already configured from Step 6.1, but let's set them again for this section:
 
 ```bash
-# Get your AWS account ID
+# Your specific AWS resources (ready to use)
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-echo "AWS Account ID: $AWS_ACCOUNT_ID"
-
-# Get your bucket name (from step 2)
-export BUCKET_NAME="your-actual-bucket-name-here"  # REPLACE THIS!
-echo "Bucket Name: $BUCKET_NAME"
-
-# Create ECR repository URI
+export BUCKET_NAME="codereview-ai-files-108782072033"
 export ECR_URI="$AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/codereview-ai-backend"
+
+echo "AWS Account ID: $AWS_ACCOUNT_ID"
+echo "Bucket Name: $BUCKET_NAME"
 echo "ECR URI: $ECR_URI"
 ```
-
-**⚠️ IMPORTANT**: Replace `your-actual-bucket-name-here` with the actual bucket name you created in Step 2!
 
 ### 9.4 Update Your AWS Integration Code
 
@@ -813,14 +812,14 @@ aws ecs register-task-definition \
 
 ### 9.8 Create ECS Service
 ```bash
-# Create ECS service (using the VPC info from Step 6)
+# Create ECS service (using your specific subnets)
 aws ecs create-service \
     --cluster codereview-ai-cluster \
     --service-name codereview-ai-service \
     --task-definition codereview-ai-backend \
     --desired-count 1 \
     --launch-type FARGATE \
-    --network-configuration "awsvpcConfiguration={subnets=[$SUBNET1,$SUBNET2],securityGroups=[$SG_ID],assignPublicIp=ENABLED}"
+    --network-configuration "awsvpcConfiguration={subnets=[subnet-0243daa28b46c8873,subnet-0fc73c07d9bef52b9],securityGroups=[$SG_ID],assignPublicIp=ENABLED}"
 
 # Check service status
 aws ecs describe-services --cluster codereview-ai-cluster --services codereview-ai-service
@@ -834,23 +833,23 @@ aws ecs describe-services --cluster codereview-ai-cluster --services codereview-
 
 ### 10.1 Test S3 Trigger
 ```bash
-# Test S3 trigger (replace with your actual bucket name)
+# Test S3 trigger
 echo "console.log('hello world');" > test.js
-aws s3 cp test.js s3://$BUCKET_NAME/sessions/test-session/test.js
+aws s3 cp test.js s3://codereview-ai-files-108782072033/sessions/test-session/test.js
 
 # Check Lambda logs (in another terminal or wait a moment)
 aws logs tail /aws/lambda/codereview-ai-processor --follow
 
 # Verify the file was uploaded
-aws s3 ls s3://$BUCKET_NAME/sessions/test-session/
+aws s3 ls s3://codereview-ai-files-108782072033/sessions/test-session/
 ```
 
 ### 10.2 Test Your Application
-1. Update your `.env` file with real access keys from IT
+1. Your `.env` file is already configured with your actual credentials
 2. Start your local application: `npm run dev` (serves frontend + backend on port 5000)
 3. Open your browser to `http://localhost:5000`
 4. Upload a code file and verify the complete workflow:
-   - File uploads to S3 ✓
+   - File uploads to S3: codereview-ai-files-108782072033 ✓
    - Lambda triggers ✓  
    - Analysis processing ✓
    - Results display ✓
