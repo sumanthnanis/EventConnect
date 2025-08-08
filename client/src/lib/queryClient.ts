@@ -14,15 +14,34 @@ export async function apiRequest(
 ): Promise<Response> {
   const isFormData = data instanceof FormData;
   
-  const res = await fetch(url, {
-    method,
-    headers: isFormData || !data ? {} : { "Content-Type": "application/json" },
-    body: isFormData ? data : data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
+  console.log('apiRequest called with:', { method, url, isFormData });
+  
+  try {
+    const headers: Record<string, string> = {};
+    if (!isFormData && data) {
+      headers["Content-Type"] = "application/json";
+    }
+    
+    const requestConfig: RequestInit = {
+      method,
+      headers,
+      body: isFormData ? data : data ? JSON.stringify(data) : undefined,
+      credentials: "include",
+    };
+    
+    console.log('Making fetch request with config:', requestConfig);
+    
+    const res = await fetch(url, requestConfig);
+    
+    console.log('Fetch response received:', { status: res.status, ok: res.ok, statusText: res.statusText });
 
-  await throwIfResNotOk(res);
-  return res;
+    await throwIfResNotOk(res);
+    return res;
+  } catch (error) {
+    console.error('apiRequest error:', error);
+    console.error('Error details:', (error as Error).message);
+    throw error;
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
