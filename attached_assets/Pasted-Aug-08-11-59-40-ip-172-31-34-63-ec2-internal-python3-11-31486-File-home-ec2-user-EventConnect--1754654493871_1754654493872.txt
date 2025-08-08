@@ -1,0 +1,40 @@
+Aug 08 11:59:40 ip-172-31-34-63.ec2.internal python3.11[31486]:   File "/home/ec2-user/EventConnect/main.py", line 115, in upload_files
+Aug 08 11:59:40 ip-172-31-34-63.ec2.internal python3.11[31486]:     s3_key = await aws_service.upload_file_to_s3(content, file.filename, session.id)
+Aug 08 11:59:40 ip-172-31-34-63.ec2.internal python3.11[31486]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Aug 08 11:59:40 ip-172-31-34-63.ec2.internal python3.11[31486]:   File "/home/ec2-user/EventConnect/server/python_services/aws_service.py", line 44, in upload_file_to_s3
+Aug 08 11:59:40 ip-172-31-34-63.ec2.internal python3.11[31486]:     raise Exception('S3 client not configured. Please check AWS credentials.')
+Aug 08 11:59:40 ip-172-31-34-63.ec2.internal python3.11[31486]: Exception: S3 client not configured. Please check AWS credentials.
+Aug 08 11:59:40 ip-172-31-34-63.ec2.internal python3.11[31486]: Upload request - Type: folder, Files received: [{'name': 'bedrock_handler.py', 'size': 530, 'type': 'text/x-python'}]
+Aug 08 11:59:40 ip-172-31-34-63.ec2.internal python3.11[31486]: Upload error: S3 client not configured. Please check AWS credentials.
+Aug 08 11:59:40 ip-172-31-34-63.ec2.internal python3.11[31486]: POST /api/upload 500 in 2ms
+Aug 08 11:59:40 ip-172-31-34-63.ec2.internal python3.11[31486]: INFO:     136.226.243.15:1448 - "POST /api/upload HTTP/1.1" 500 Internal Server Error
+Aug 08 11:57:54 ip-172-31-34-63.ec2.internal python3.11[31299]: Upload error: S3 client not configured. Please check AWS credentials.
+Aug 08 11:57:54 ip-172-31-34-63.ec2.internal python3.11[31299]: POST /api/upload 500 in 2ms
+Aug 08 11:57:54 ip-172-31-34-63.ec2.internal python3.11[31299]: INFO:     136.226.243.15:12794 - "POST /api/upload HTTP/1.1" 500 Internal Server Error
+Aug 08 11:59:26 ip-172-31-34-63.ec2.internal systemd[1]: Stopping codereview-ai.service - CodeReview AI Application...
+Aug 08 11:59:26 ip-172-31-34-63.ec2.internal python3.11[31299]: INFO:     Shutting down
+Aug 08 11:59:26 ip-172-31-34-63.ec2.internal python3.11[31299]: INFO:     Waiting for application shutdown.
+Aug 08 11:59:26 ip-172-31-34-63.ec2.internal python3.11[31299]: INFO:     Application shutdown complete.
+Aug 08 11:59:26 ip-172-31-34-63.ec2.internal python3.11[31299]: INFO:     Finished server process [31299]
+Aug 08 11:59:26 ip-172-31-34-63.ec2.internal systemd[1]: codereview-ai.service: Deactivated successfully.
+Aug 08 11:59:26 ip-172-31-34-63.ec2.internal systemd[1]: Stopped codereview-ai.service - CodeReview AI Application.
+Aug 08 11:59:26 ip-172-31-34-63.ec2.internal systemd[1]: Started codereview-ai.service - CodeReview AI Application.
+Aug 08 11:59:26 ip-172-31-34-63.ec2.internal python3.11[31486]: INFO:     Started server process [31486]
+Aug 08 11:59:26 ip-172-31-34-63.ec2.internal python3.11[31486]: INFO:     Waiting for application startup.
+Aug 08 11:59:26 ip-172-31-34-63.ec2.internal python3.11[31486]: INFO:     Application startup complete.
+Aug 08 11:59:26 ip-172-31-34-63.ec2.internal python3.11[31486]: INFO:     Uvicorn running on http://0.0.0.0:5000 (Press CTRL+C to quit)
+Aug 08 11:59:31 ip-172-31-34-63.ec2.internal python3.11[31486]: INFO:     136.226.243.15:1459 - "GET / HTTP/1.1" 200 OK
+Aug 08 11:59:31 ip-172-31-34-63.ec2.internal python3.11[31486]: INFO:     136.226.243.15:1458 - "GET /assets/index-Bi_pBahQ.css HTTP/1.1" 304 Not Modified
+Aug 08 11:59:31 ip-172-31-34-63.ec2.internal python3.11[31486]: INFO:     136.226.243.15:1459 - "GET /assets/index-owHCGsMC.js HTTP/1.1" 304 Not Modified
+Aug 08 11:59:32 ip-172-31-34-63.ec2.internal python3.11[31486]: INFO:     136.226.243.15:1459 - "GET /favicon.ico HTTP/1.1" 200 OK
+Aug 08 11:59:40 ip-172-31-34-63.ec2.internal python3.11[31486]: Traceback (most recent call last):
+Aug 08 11:59:40 ip-172-31-34-63.ec2.internal python3.11[31486]:   File "/home/ec2-user/EventConnect/main.py", line 115, in upload_files
+Aug 08 11:59:40 ip-172-31-34-63.ec2.internal python3.11[31486]:     s3_key = await aws_service.upload_file_to_s3(content, file.filename, session.id)
+Aug 08 11:59:40 ip-172-31-34-63.ec2.internal python3.11[31486]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Aug 08 11:59:40 ip-172-31-34-63.ec2.internal python3.11[31486]:   File "/home/ec2-user/EventConnect/server/python_services/aws_service.py", line 44, in upload_file_to_s3
+Aug 08 11:59:40 ip-172-31-34-63.ec2.internal python3.11[31486]:     raise Exception('S3 client not configured. Please check AWS credentials.')
+Aug 08 11:59:40 ip-172-31-34-63.ec2.internal python3.11[31486]: Exception: S3 client not configured. Please check AWS credentials.
+Aug 08 11:59:40 ip-172-31-34-63.ec2.internal python3.11[31486]: Upload request - Type: folder, Files received: [{'name': 'bedrock_handler.py', 'size': 530, 'type': 'text/x-python'}]
+Aug 08 11:59:40 ip-172-31-34-63.ec2.internal python3.11[31486]: Upload error: S3 client not configured. Please check AWS credentials.
+Aug 08 11:59:40 ip-172-31-34-63.ec2.internal python3.11[31486]: POST /api/upload 500 in 2ms
+Aug 08 11:59:40 ip-172-31-34-63.ec2.internal python3.11[31486]: INFO:     136.226.243.15:1448 - "POST /api/upload HTTP/1.1" 500 Internal Server Error
