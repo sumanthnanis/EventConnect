@@ -104,22 +104,22 @@ async def upload_files(
             processedFiles=0
         ))
 
-        # Create file analysis records
+        # Create file analysis records and upload to S3
         for file in files:
             # Read file content
             content = await file.read()
             await file.seek(0)  # Reset file pointer for potential future reads
             
-            s3_key = f"sessions/{session.id}/{int(time.time() * 1000)}-{file.filename}"
-            
             if file.filename:
+                # Upload file to S3
+                s3_key = await aws_service.upload_file_to_s3(content, file.filename, session.id)
                 await storage.create_file_analysis(FileAnalysisCreate(
                     sessionId=session.id,
                     fileName=file.filename,
                     fileSize=len(content),
                     fileType=file.content_type or 'application/octet-stream',
                     s3Key=s3_key,
-                    status='uploading'
+                    status='uploaded'
                 ))
 
         # Update session status

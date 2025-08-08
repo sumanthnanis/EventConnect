@@ -28,12 +28,26 @@ class FileProcessor:
             for file in files:
                 await self._process_file(file.id)
             
-            # For development, simulate file analysis instead of using AWS
-            mock_analysis_result = self._generate_mock_analysis([f.fileName for f in files])
+            # Get actual file contents from uploads
+            file_contents = []
+            for file in files:
+                try:
+                    # Get file content from S3 or local storage
+                    content = await aws_service.get_file_from_s3(file.s3Key)
+                    file_contents.append(content)
+                except Exception as e:
+                    print(f"Error reading file {file.fileName}: {e}")
+                    file_contents.append("// Error: Could not read file content")
+            
+            # Use AWS Bedrock for real analysis
+            analysis_result = await aws_service.analyze_code_with_bedrock(
+                file_contents, 
+                [f.fileName for f in files]
+            )
             
             # Distribute analysis results across files
             issues_per_file = self._distribute_issues_across_files(
-                mock_analysis_result, 
+                analysis_result, 
                 [f.fileName for f in files]
             )
             
@@ -69,11 +83,14 @@ class FileProcessor:
     
     async def _process_file(self, file_id: str) -> None:
         """Process a single file"""
+        # File processing will be handled in the main process_session method
+        # Individual file processing can be added here if needed
+        
         # Update file status to processing
         await storage.update_file_analysis(file_id, {'status': 'processing'})
         
-        # Simulate some processing time
-        await asyncio.sleep(1)
+        # TODO: Here you could add individual file processing steps
+        # For now, we'll process all files together in the main process_session method
         
         # Update to analyzing status
         await storage.update_file_analysis(file_id, {'status': 'analyzing'})
