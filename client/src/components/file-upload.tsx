@@ -22,6 +22,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
 
   const uploadMutation = useMutation({
     mutationFn: async (files: File[]) => {
+      console.log('=== MUTATION STARTED ===');
       console.log('Uploading files:', files.length, files.map(f => f.name));
       const formData = new FormData();
       files.forEach((file, index) => {
@@ -58,9 +59,15 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
     },
     onError: (error) => {
       console.error('Upload error:', error);
+      console.error('Error type:', typeof error);
+      console.error('Error keys:', Object.keys(error || {}));
+      console.error('Error message:', (error as Error)?.message);
+      console.error('Error stack:', (error as Error)?.stack);
+      console.error('Full error object:', JSON.stringify(error, null, 2));
+      
       toast({
         title: "Upload failed",
-        description: error.message || "An unknown error occurred",
+        description: (error as Error)?.message || "An unknown error occurred",
         variant: "destructive",
       });
     },
