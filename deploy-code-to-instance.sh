@@ -46,7 +46,7 @@ echo "🔄 Step 3: Uploading to EC2 instance..."
 # Upload the package
 scp -i $KEY_FILE -o StrictHostKeyChecking=no \
     codereview-ai-deploy.tar.gz \
-    ec2-user@$PUBLIC_IP:/opt/codereview-ai/
+    ec2-user@$PUBLIC_IP:/home/ec2-user/EventConnect/
 
 echo "   ✅ Code uploaded to instance"
 
@@ -54,7 +54,7 @@ echo ""
 echo "⚙️  Step 4: Installing and starting application..."
 # SSH into instance and deploy
 ssh -i $KEY_FILE -o StrictHostKeyChecking=no ec2-user@$PUBLIC_IP << 'EOFREMOTE'
-cd /opt/codereview-ai
+cd /home/ec2-user/EventConnect
 
 # Extract the code
 tar -xzf codereview-ai-deploy.tar.gz

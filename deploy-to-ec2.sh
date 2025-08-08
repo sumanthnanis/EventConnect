@@ -115,8 +115,8 @@ systemctl start docker
 systemctl enable docker
 
 # Create app directory
-mkdir -p /opt/codereview-ai
-cd /opt/codereview-ai
+mkdir -p /home/ec2-user/EventConnect
+cd /home/ec2-user/EventConnect
 
 # Create systemd service file
 cat > /etc/systemd/system/codereview-ai.service << 'EOFSERVICE'
@@ -127,7 +127,7 @@ After=network.target
 [Service]
 Type=simple
 User=ec2-user
-WorkingDirectory=/opt/codereview-ai
+WorkingDirectory=/home/ec2-user/EventConnect
 Environment=NODE_ENV=production
 Environment=PORT=5000
 ExecStart=/usr/bin/python3.11 main.py
@@ -139,7 +139,7 @@ WantedBy=multi-user.target
 EOFSERVICE
 
 # Set ownership
-chown -R ec2-user:ec2-user /opt/codereview-ai
+chown -R ec2-user:ec2-user /home/ec2-user/EventConnect
 
 # Enable service (will start after code deployment)
 systemctl enable codereview-ai
