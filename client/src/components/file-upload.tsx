@@ -32,8 +32,22 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
 
       console.log('FormData entries:', Array.from(formData.entries()).map(([key, value]) => [key, value instanceof File ? `File: ${value.name}` : value]));
 
-      const response = await apiRequest('POST', '/api/upload', formData);
-      return response.json();
+      console.log('Making request to:', '/api/upload');
+      console.log('Request method:', 'POST');
+      console.log('FormData size:', formData.has('files') ? 'Has files' : 'No files');
+      
+      try {
+        const response = await apiRequest('POST', '/api/upload', formData);
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        const result = await response.json();
+        console.log('Response data:', result);
+        return result;
+      } catch (error) {
+        console.error('Network/Parse error:', error);
+        console.error('Error details:', (error as Error).message, (error as Error).stack);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       toast({
