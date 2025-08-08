@@ -1,0 +1,37 @@
+Aug 08 10:53:40 ip-172-31-34-63.ec2.internal systemd[1]: codereview-ai.service: Failed with result 'exit-code'.
+Aug 08 10:53:50 ip-172-31-34-63.ec2.internal systemd[1]: codereview-ai.service: Scheduled restart job, restart counter is at 95.
+Aug 08 10:53:50 ip-172-31-34-63.ec2.internal systemd[1]: Stopped codereview-ai.service - CodeReview AI Application.
+Aug 08 10:53:50 ip-172-31-34-63.ec2.internal systemd[1]: Started codereview-ai.service - CodeReview AI Application.
+Aug 08 10:53:50 ip-172-31-34-63.ec2.internal python3.11[27845]: Traceback (most recent call last):
+Aug 08 10:53:50 ip-172-31-34-63.ec2.internal python3.11[27845]:   File "/opt/codereview-ai/EventConnect/main.py", line 13, in <module>
+Aug 08 10:53:50 ip-172-31-34-63.ec2.internal python3.11[27845]:     from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Request, BackgroundTasks
+Aug 08 10:53:50 ip-172-31-34-63.ec2.internal python3.11[27845]: ModuleNotFoundError: No module named 'fastapi'
+Aug 08 10:53:50 ip-172-31-34-63.ec2.internal systemd[1]: codereview-ai.service: Main process exited, code=exited, status=1/FAILURE
+Aug 08 10:53:50 ip-172-31-34-63.ec2.internal systemd[1]: codereview-ai.service: Failed with result 'exit-code'.
+Aug 08 10:54:00 ip-172-31-34-63.ec2.internal systemd[1]: codereview-ai.service: Scheduled restart job, restart counter is at 96.
+Aug 08 10:54:00 ip-172-31-34-63.ec2.internal systemd[1]: Stopped codereview-ai.service - CodeReview AI Application.
+Aug 08 10:54:00 ip-172-31-34-63.ec2.internal systemd[1]: Started codereview-ai.service - CodeReview AI Application.
+Aug 08 10:54:00 ip-172-31-34-63.ec2.internal python3.11[27902]: Traceback (most recent call last):
+Aug 08 10:54:00 ip-172-31-34-63.ec2.internal python3.11[27902]:   File "/opt/codereview-ai/EventConnect/main.py", line 13, in <module>
+Aug 08 10:54:00 ip-172-31-34-63.ec2.internal python3.11[27902]:     from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Request, BackgroundTasks
+Aug 08 10:54:00 ip-172-31-34-63.ec2.internal python3.11[27902]: ModuleNotFoundError: No module named 'fastapi'
+Aug 08 10:54:00 ip-172-31-34-63.ec2.internal systemd[1]: codereview-ai.service: Main process exited, code=exited, status=1/FAILURE
+Aug 08 10:54:00 ip-172-31-34-63.ec2.internal systemd[1]: codereview-ai.service: Failed with result 'exit-code'.
+Aug 08 10:54:10 ip-172-31-34-63.ec2.internal systemd[1]: codereview-ai.service: Scheduled restart job, restart counter is at 97.
+Aug 08 10:54:10 ip-172-31-34-63.ec2.internal systemd[1]: Stopped codereview-ai.service - CodeReview AI Application.
+Aug 08 10:54:10 ip-172-31-34-63.ec2.internal systemd[1]: Started codereview-ai.service - CodeReview AI Application.
+Aug 08 10:54:10 ip-172-31-34-63.ec2.internal python3.11[27905]: Traceback (most recent call last):
+Aug 08 10:54:10 ip-172-31-34-63.ec2.internal python3.11[27905]:   File "/opt/codereview-ai/EventConnect/main.py", line 13, in <module>
+Aug 08 10:54:10 ip-172-31-34-63.ec2.internal python3.11[27905]:     from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Request, BackgroundTasks
+Aug 08 10:54:10 ip-172-31-34-63.ec2.internal python3.11[27905]: ModuleNotFoundError: No module named 'fastapi'
+Aug 08 10:54:10 ip-172-31-34-63.ec2.internal systemd[1]: codereview-ai.service: Main process exited, code=exited, status=1/FAILURE
+Aug 08 10:54:10 ip-172-31-34-63.ec2.internal systemd[1]: codereview-ai.service: Failed with result 'exit-code'.
+Aug 08 10:54:20 ip-172-31-34-63.ec2.internal systemd[1]: codereview-ai.service: Scheduled restart job, restart counter is at 98.
+Aug 08 10:54:20 ip-172-31-34-63.ec2.internal systemd[1]: Stopped codereview-ai.service - CodeReview AI Application.
+Aug 08 10:54:20 ip-172-31-34-63.ec2.internal systemd[1]: Started codereview-ai.service - CodeReview AI Application.
+Aug 08 10:54:21 ip-172-31-34-63.ec2.internal python3.11[27906]: Traceback (most recent call last):
+Aug 08 10:54:21 ip-172-31-34-63.ec2.internal python3.11[27906]:   File "/opt/codereview-ai/EventConnect/main.py", line 13, in <module>
+Aug 08 10:54:21 ip-172-31-34-63.ec2.internal python3.11[27906]:     from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Request, BackgroundTasks
+Aug 08 10:54:21 ip-172-31-34-63.ec2.internal python3.11[27906]: ModuleNotFoundError: No module named 'fastapi'
+Aug 08 10:54:21 ip-172-31-34-63.ec2.internal systemd[1]: codereview-ai.service: Main process exited, code=exited, status=1/FAILURE
+Aug 08 10:54:21 ip-172-31-34-63.ec2.internal systemd[1]: codereview-ai.service: Failed with result 'exit-code'.
