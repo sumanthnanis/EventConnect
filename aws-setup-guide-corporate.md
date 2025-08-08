@@ -151,7 +151,7 @@ aws configure set region us-east-1
 ### 3.2 Request Model Access
 1. In left menu, click **"Model access"**
 2. Click **"Request model access"** or **"Manage model access"**
-3. Find **"Claude 3 Haiku"** by Anthropic
+3. Find **"Claude 3.7 Sonnet"** by Anthropic
 4. Click **"Request access"** or check the box if available
 5. If prompted, fill out use case:
    - **Use case**: "Internal code review and analysis tool"
@@ -163,9 +163,9 @@ aws configure set region us-east-1
 # Wait 2-3 minutes, then test access
 aws bedrock list-foundation-models --region us-east-1 | grep claude
 
-# Test Claude 3 Haiku specifically
+# Test Claude 3.7 Sonnet specifically
 aws bedrock-runtime invoke-model \
-    --model-id anthropic.claude-3-haiku-20240307-v1:0 \
+    --model-id us.anthropic.claude-3-7-sonnet-20250219-v1:0 \
     --body '{"anthropic_version": "bedrock-2023-05-31", "max_tokens": 100, "messages": [{"role": "user", "content": "Write hello world in JavaScript"}]}' \
     --region us-east-1 \
     output.txt
@@ -174,7 +174,7 @@ aws bedrock-runtime invoke-model \
 cat output.txt
 ```
 
-**✅ Checkpoint**: Claude 3 Haiku shows "Access granted" and returns valid JavaScript code
+**✅ Checkpoint**: Claude 3.7 Sonnet shows "Access granted" and returns valid JavaScript code
 
 ---
 
@@ -545,7 +545,7 @@ AWS_DEFAULT_REGION=us-east-1
 S3_BUCKET_NAME=codereview-ai-files-108782072033
 
 # Bedrock Configuration
-BEDROCK_MODEL_ID=anthropic.claude-3-haiku-20240307-v1:0
+BEDROCK_MODEL_ID=us.anthropic.claude-3-7-sonnet-20250219-v1:0
 BEDROCK_REGION=us-east-1
 
 # ECS Configuration
@@ -877,7 +877,7 @@ aws s3 ls s3://codereview-ai-files-108782072033/sessions/test-session/
    - Analysis processing ✓
    - Results display ✓
 
-**✅ Final Checkpoint**: End-to-end analysis workflow complete with Claude 3 Haiku
+**✅ Final Checkpoint**: End-to-end analysis workflow complete with Claude 3.7 Sonnet
 
 ---
 
@@ -887,11 +887,11 @@ aws s3 ls s3://codereview-ai-files-108782072033/sessions/test-session/
 - S3: $0.10
 - Lambda: $0.05
 - ECS Fargate: $2.00
-- Bedrock (Claude 3 Haiku): $0.75
-- **Total: ~$2.90/day or $87/month**
+- Bedrock (Claude 3.7 Sonnet): $1.50
+- **Total: ~$3.65/day or $110/month**
 
 **Light Usage (2-3 analyses/day):**
-- **Total: ~$18-30/month**
+- **Total: ~$25-40/month**
 
 ---
 
@@ -900,7 +900,7 @@ aws s3 ls s3://codereview-ai-files-108782072033/sessions/test-session/
 **TODAY:**
 - [ ] Tested permissions in CloudShell
 - [ ] Created S3 bucket with proper configuration
-- [ ] Enabled Bedrock access with Claude 3 Haiku
+- [ ] Enabled Bedrock access with Claude 3.7 Sonnet
 - [ ] Created ECR repository
 - [ ] Created IAM roles for ECS and Lambda
 - [ ] Created ECS cluster with VPC/security group setup
@@ -916,4 +916,4 @@ aws s3 ls s3://codereview-ai-files-108782072033/sessions/test-session/
 - [ ] Tested complete S3 → Lambda → Bedrock workflow
 - [ ] Verified end-to-end analysis functionality
 
-**🎉 Success!** Your CodeReview AI is running on AWS with Claude 3 Haiku!
+**🎉 Success!** Your CodeReview AI is running on AWS with Claude 3.7 Sonnet!
