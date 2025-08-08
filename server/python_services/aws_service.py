@@ -104,7 +104,7 @@ function exampleFunction() {{
         
         try:
             response = bedrock_client.invoke_model(
-                modelId='anthropic.claude-3-sonnet-20240229-v1:0',
+                modelId='us.anthropic.claude-3-7-sonnet-20250219-v1:0',
                 contentType='application/json',
                 accept='*/*',
                 body=json.dumps({
@@ -119,10 +119,13 @@ function exampleFunction() {{
                 })
             )
             
-            response_body = json.loads(response['body'].read())
+            # Fix for invalidbase64 error - properly decode the streaming body
+            response_body = response['body'].read().decode('utf-8')
+            response_json = json.loads(response_body)
+            analysis_text = response_json['content'][0]['text']
             
             # Parse the analysis result from Claude's response
-            return self._parse_analysis_result(response_body['content'][0]['text'])
+            return self._parse_analysis_result(analysis_text)
         except Exception as error:
             print('Bedrock analysis error:', error)
             raise Exception('Failed to analyze code with Bedrock')
