@@ -10,19 +10,11 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-- **CRITICAL: Fixed all major gaps in AWS setup guide** (August 8, 2025)
-- **Fixed missing S3 event notification setup** - Users were only running permission command, missing actual trigger
-- **Added missing Step 3** - Bedrock setup was completely missing from sequence
-- **Fixed port inconsistencies** - Guide showed 8000, app uses 5000
-- **Added VPC/subnet configuration** - ECS deployment was missing network setup
-- **Added security group creation** - Required for ECS tasks to accept traffic
-- **Fixed Claude model versions** - Standardized on Claude 3 Haiku (more cost-effective)
-- **Added frontend build step** - Production deployment was missing React build
-- **Added placeholder replacement instructions** - Users weren't replacing bucket names/account IDs
-- **Added CloudWatch log group creation** - Required before ECS task definition
-- **Added ECS service creation** - Tasks weren't being deployed as services
-- **Removed duplicate sections** - Guide had conflicting duplicate content
-- All steps now properly sequenced with correct dependencies and checkpoints
+- **Removed AWS configuration guides and deployment scripts** (August 9, 2025)
+  - Deleted aws-setup-guide.md and aws-setup-guide-corporate.md
+  - Removed deployment scripts: deploy-code-to-instance.sh, deploy-to-ec2.sh, start.sh
+  - Cleaned up aws/ directory and deployment archives
+  - Simplified project structure for local development focus
 
 ## System Architecture
 
