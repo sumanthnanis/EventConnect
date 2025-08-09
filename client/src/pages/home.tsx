@@ -3,7 +3,7 @@ import Footer from "@/components/layout/footer";
 import FileUpload from "@/components/file-upload";
 import ProcessingStatus from "@/components/processing-status";
 import ReviewResults from "@/components/review-results";
-import AwsSetupGuide from "@/components/aws-setup-guide";
+// import AwsSetupGuide from "@/components/aws-setup-guide";
 import { useState } from "react";
 
 export default function Home() {
