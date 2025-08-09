@@ -461,35 +461,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         </div>
       </div>
 
-      {/* Architecture Info Card */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
-        <div className="flex items-start space-x-4">
-          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-            <i className="fas fa-cloud text-white"></i>
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">AWS-Powered Analysis</h3>
-            <div className="space-y-2 text-sm text-slate-600">
-              <div className="flex items-center space-x-2">
-                <i className="fas fa-arrow-right text-blue-500 w-4"></i>
-                <span>Files uploaded directly to S3 with pre-signed URLs</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <i className="fas fa-arrow-right text-blue-500 w-4"></i>
-                <span>Lambda triggers FastAPI backend on ECS Fargate</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <i className="fas fa-arrow-right text-blue-500 w-4"></i>
-                <span>Amazon Bedrock (Claude) analyzes code structure</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <i className="fas fa-arrow-right text-blue-500 w-4"></i>
-                <span>Stateless processing with auto-cleanup</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+
     </div>
   );
 }
