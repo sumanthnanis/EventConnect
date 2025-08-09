@@ -17,13 +17,13 @@ export default function Header() {
               <p className="text-xs text-slate-500">Powered by Amazon Bedrock</p>
             </div>
           </div>
-          
+
           <nav className="hidden md:flex space-x-6">
             <a href="#" className="text-slate-600 hover:text-slate-900 font-medium">Dashboard</a>
             <a href="#" className="text-slate-600 hover:text-slate-900 font-medium">History</a>
             <a href="#" className="text-slate-600 hover:text-slate-900 font-medium">Settings</a>
           </nav>
-          
+
           <div className="flex items-center space-x-4">
             <div className="hidden md:flex items-center space-x-2 text-sm text-slate-600">
               <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse-soft"></div>
