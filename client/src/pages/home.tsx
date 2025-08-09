@@ -18,6 +18,10 @@ export default function Home() {
     setShowResults(true);
   };
 
+  const handleReanalyzeStart = () => {
+    setShowResults(false);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Header />
@@ -32,7 +36,10 @@ export default function Home() {
         </div>
 
         {showResults && sessionId && (
-          <ReviewResults sessionId={sessionId} />
+          <ReviewResults 
+            sessionId={sessionId} 
+            onReanalyzeStart={handleReanalyzeStart}
+          />
         )}
 
       

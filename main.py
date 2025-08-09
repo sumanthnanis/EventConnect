@@ -274,6 +274,87 @@ async def webhook_process(request: Request):
             }
         )
 
+# Re-analyze session endpoint
+@app.post("/api/analysis/reanalyze/{session_id}")
+async def reanalyze_session(session_id: str, background_tasks: BackgroundTasks):
+    try:
+        session = await storage.get_analysis_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        # Reset session status and clear results
+        await storage.update_analysis_session(session_id, {
+            'status': 'processing',
+            'processedFiles': 0,
+            'completedAt': None
+        })
+
+        # Reset all file analysis status and clear results
+        files = await storage.get_file_analysis_by_session(session_id)
+        for file in files:
+            await storage.update_file_analysis(file.id, {
+                'status': 'uploaded',
+                'analysisResult': None,
+                'completedAt': None
+            })
+
+        # Trigger processing asynchronously
+        background_tasks.add_task(file_processor.process_session, session_id)
+
+        return {
+            "sessionId": session_id,
+            "message": "Re-analysis started successfully"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as error:
+        print("Re-analyze error:", error)
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500, 
+            detail={
+                "message": "Failed to start re-analysis", 
+                "error": str(error)
+            }
+        )
+
+# Share session results endpoint
+@app.post("/api/analysis/share/{session_id}")
+async def share_session(session_id: str, request: Request):
+    try:
+        session = await storage.get_analysis_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        if session.status != 'completed':
+            raise HTTPException(status_code=400, detail="Analysis not completed yet")
+
+        # Generate a shareable link/ID (in a real app, you'd save this to a sharing table)
+        share_id = f"share-{session_id}-{uuid.uuid4().hex[:8]}"
+        
+        # In a real implementation, you would store this share mapping in a database
+        # For now, we'll return the share information
+        
+        return {
+            "shareId": share_id,
+            "shareUrl": f"{request.url.scheme}://{request.url.netloc}/shared/{share_id}",
+            "message": "Results shared successfully"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as error:
+        print("Share error:", error)
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500, 
+            detail={
+                "message": "Failed to share results", 
+                "error": str(error)
+            }
+        )
+
 # Health check endpoint
 @app.get("/api/health")
 async def health_check():

@@ -1,16 +1,100 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { AnalysisResult } from "@shared/schema";
+import { useState } from "react";
 
 interface ReviewResultsProps {
   sessionId: string;
+  onReanalyzeStart?: () => void;
 }
 
-export default function ReviewResults({ sessionId }: ReviewResultsProps) {
+export default function ReviewResults({ sessionId, onReanalyzeStart }: ReviewResultsProps) {
+  const { toast } = useToast();
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+
   const { data: results, isLoading } = useQuery({
     queryKey: ['/api/analysis/results', sessionId],
     enabled: !!sessionId,
   });
+
+  // Re-analyze mutation
+  const reanalyzeMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', `/api/analysis/reanalyze/${sessionId}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Re-analysis Started",
+        description: "Your files are being re-analyzed. You'll see updated results soon.",
+      });
+      // Invalidate results cache and call callback
+      queryClient.invalidateQueries({ queryKey: ['/api/analysis/results', sessionId] });
+      onReanalyzeStart?.();
+    },
+    onError: (error) => {
+      toast({
+        title: "Re-analysis Failed",
+        description: error.message || "Failed to start re-analysis. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Share mutation
+  const shareMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', `/api/analysis/share/${sessionId}`);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setShareUrl(data.shareUrl);
+      // Copy to clipboard
+      navigator.clipboard.writeText(data.shareUrl).then(() => {
+        toast({
+          title: "Link Copied!",
+          description: "The shareable link has been copied to your clipboard.",
+        });
+      }).catch(() => {
+        toast({
+          title: "Share Link Generated",
+          description: `Share this link: ${data.shareUrl}`,
+        });
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Sharing Failed",
+        description: error.message || "Failed to generate share link. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleReanalyze = () => {
+    reanalyzeMutation.mutate();
+  };
+
+  const handleShare = () => {
+    shareMutation.mutate();
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast({
+        title: "Copied!",
+        description: "Link copied to clipboard successfully.",
+      });
+    }).catch(() => {
+      toast({
+        title: "Copy Failed",
+        description: "Please copy the link manually.",
+        variant: "destructive",
+      });
+    });
+  };
 
   if (isLoading) {
     return (
@@ -147,9 +231,15 @@ export default function ReviewResults({ sessionId }: ReviewResultsProps) {
             <i className="fas fa-download mr-1"></i>
             Export
           </Button>
-          <Button variant="outline" size="sm">
-            <i className="fas fa-share-alt mr-1"></i>
-            Share
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleShare}
+            disabled={shareMutation.isPending}
+            data-testid="button-share"
+          >
+            <i className={`mr-1 ${shareMutation.isPending ? 'fas fa-spinner fa-spin' : 'fas fa-share-alt'}`}></i>
+            {shareMutation.isPending ? 'Sharing...' : 'Share'}
           </Button>
         </div>
       </div>
@@ -240,6 +330,36 @@ export default function ReviewResults({ sessionId }: ReviewResultsProps) {
         })}
       </div>
 
+      {/* Share URL Display */}
+      {shareUrl && (
+        <div className="mt-6 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex-1 mr-3">
+              <h4 className="text-sm font-semibold text-emerald-800 mb-1">
+                <i className="fas fa-share-alt mr-2"></i>
+                Results Shared Successfully
+              </h4>
+              <p className="text-xs text-emerald-700 mb-2">
+                Anyone with this link can view your analysis results:
+              </p>
+              <div className="bg-white border border-emerald-300 rounded px-3 py-2 text-sm text-emerald-800 font-mono break-all">
+                {shareUrl}
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => copyToClipboard(shareUrl)}
+              className="shrink-0"
+              data-testid="button-copy-share-url"
+            >
+              <i className="fas fa-copy mr-1"></i>
+              Copy
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Summary Footer */}
       <div className="mt-8 pt-6 border-t border-slate-200">
         <div className="flex items-center justify-between">
@@ -248,9 +368,14 @@ export default function ReviewResults({ sessionId }: ReviewResultsProps) {
             Analysis completed
           </div>
           <div className="flex items-center space-x-4">
-            <Button variant="outline">
-              <i className="fas fa-redo mr-1"></i>
-              Re-analyze
+            <Button 
+              variant="outline" 
+              onClick={handleReanalyze}
+              disabled={reanalyzeMutation.isPending}
+              data-testid="button-reanalyze"
+            >
+              <i className={`mr-1 ${reanalyzeMutation.isPending ? 'fas fa-spinner fa-spin' : 'fas fa-redo'}`}></i>
+              {reanalyzeMutation.isPending ? 'Starting...' : 'Re-analyze'}
             </Button>
             <Button onClick={exportResults}>
               <i className="fas fa-download mr-1"></i>
