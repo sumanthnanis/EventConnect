@@ -35,7 +35,7 @@ export default function Home() {
           <ReviewResults sessionId={sessionId} />
         )}
 
-        <AwsSetupGuide />
+      
       </main>
 
       <Footer />
