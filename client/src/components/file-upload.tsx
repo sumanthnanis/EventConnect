@@ -36,7 +36,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       console.log('Making request to:', '/api/upload');
       console.log('Request method:', 'POST');
       console.log('FormData size:', formData.has('files') ? 'Has files' : 'No files');
-      
+
       try {
         const response = await apiRequest('POST', '/api/upload', formData);
         console.log('Response status:', response.status);
@@ -64,7 +64,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       console.error('Error message:', (error as Error)?.message);
       console.error('Error stack:', (error as Error)?.stack);
       console.error('Full error object:', JSON.stringify(error, null, 2));
-      
+
       toast({
         title: "Upload failed",
         description: (error as Error)?.message || "An unknown error occurred",
@@ -75,16 +75,16 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
 
   const handleFileSelect = useCallback((files: FileList) => {
     const fileArray = Array.from(files);
-    
+
     // Validate file types
     const validExtensions = ['.js', '.jsx', '.ts', '.tsx', '.py', '.java', '.cpp', '.c', '.go'];
-    
+
     // Filter to only include valid code files
-    const validFiles = fileArray.filter(file => 
+    const validFiles = fileArray.filter(file =>
       validExtensions.some(ext => file.name.toLowerCase().endsWith(ext))
     );
-    
-    const invalidFiles = fileArray.filter(file => 
+
+    const invalidFiles = fileArray.filter(file =>
       !validExtensions.some(ext => file.name.toLowerCase().endsWith(ext))
     );
 
@@ -152,11 +152,11 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
   const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
-    
+
     if (e.dataTransfer.items) {
       const items = Array.from(e.dataTransfer.items);
       const files: File[] = [];
-      
+
       // Process each item
       for (const item of items) {
         if (item.kind === 'file') {
@@ -174,7 +174,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           }
         }
       }
-      
+
       if (files.length > 0) {
         const dt = new DataTransfer();
         files.forEach(file => dt.items.add(file));
@@ -189,7 +189,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
   const traverseDirectory = useCallback(async (directoryEntry: FileSystemDirectoryEntry): Promise<File[]> => {
     const files: File[] = [];
     const reader = directoryEntry.createReader();
-    
+
     return new Promise((resolve) => {
       const readEntries = () => {
         reader.readEntries(async (entries) => {
@@ -197,7 +197,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
             resolve(files);
             return;
           }
-          
+
           for (const entry of entries) {
             if (entry.isFile) {
               const file = await new Promise<File>((fileResolve) => {
@@ -206,11 +206,11 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
               files.push(file);
             }
           }
-          
+
           readEntries(); // Continue reading
         });
       };
-      
+
       readEntries();
     });
   }, []);
@@ -240,20 +240,20 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
     try {
       const testFile = uploadedFiles[0].file;
       console.log('Test file:', testFile.name, testFile.size);
-      
+
       const formData = new FormData();
       formData.append('files', testFile);
       formData.append('uploadType', uploadType);
-      
+
       console.log('Making direct fetch request...');
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
-      
+
       console.log('Direct response status:', response.status);
       console.log('Direct response ok:', response.ok);
-      
+
       if (response.ok) {
         const result = await response.json();
         console.log('Direct upload SUCCESS:', result);
@@ -287,7 +287,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       new File(['console.log("Hello World");'], 'demo.js', { type: 'text/javascript' }),
       new File(['function test() { return true; }'], 'utils.js', { type: 'text/javascript' })
     ];
-    
+
     uploadMutation.mutate(mockFiles);
   };
 
@@ -340,8 +340,8 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         {/* Drag and Drop Zone */}
         <div
           className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer group ${
-            isDragOver 
-              ? 'border-blue-500 bg-blue-50' 
+            isDragOver
+              ? 'border-blue-500 bg-blue-50'
               : 'border-slate-300 hover:border-blue-500'
           }`}
           onDragOver={handleDragOver}
@@ -352,21 +352,21 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           <div className="space-y-4">
             <div className="flex justify-center">
               <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-colors ${
-                isDragOver 
-                  ? 'bg-blue-100' 
+                isDragOver
+                  ? 'bg-blue-100'
                   : 'bg-slate-100 group-hover:bg-blue-50'
               }`}>
                 <i className={`fas fa-cloud-upload-alt text-2xl transition-colors ${
-                  isDragOver 
-                    ? 'text-blue-500' 
+                  isDragOver
+                    ? 'text-blue-500'
                     : 'text-slate-400 group-hover:text-blue-500'
                 }`}></i>
               </div>
             </div>
             <div>
               <p className="text-base font-medium text-slate-900">
-                {uploadType === "folder" 
-                  ? "Drop folder here or click to select folder" 
+                {uploadType === "folder"
+                  ? "Drop folder here or click to select folder"
                   : "Drop files here or click to upload"}
               </p>
               <p className="text-sm text-slate-600 mt-1">
@@ -447,7 +447,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
               </>
             )}
           </Button>
-          
+
           {/* Demo Button */}
           <Button
             onClick={handleDemoUpload}
