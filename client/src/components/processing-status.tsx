@@ -39,7 +39,7 @@ export default function ProcessingStatus({ sessionId, onComplete }: ProcessingSt
               <span className="text-sm font-medium text-slate-500">Waiting</span>
             </div>
           </div>
-          
+
           <div className="text-center py-8">
             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <i className="fas fa-clock text-slate-400 text-2xl"></i>

@@ -460,8 +460,6 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           </Button>
         </div>
       </div>
-
-
     </div>
   );
 }

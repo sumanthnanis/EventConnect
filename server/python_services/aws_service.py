@@ -1,5 +1,5 @@
 """
-AWS service implementation that replicates the TypeScript AWS service
+Cloud service implementation for file storage and AI analysis
 """
 
 import os

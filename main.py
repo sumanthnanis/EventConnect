@@ -42,20 +42,20 @@ app.add_middleware(
 async def log_requests(request: Request, call_next):
     start_time = time.time()
     path = str(request.url.path)
-    
+
     response = await call_next(request)
-    
+
     process_time = time.time() - start_time
-    
+
     if path.startswith("/api"):
         # Try to capture JSON response for logging (similar to Express version)
         log_line = f"{request.method} {path} {response.status_code} in {process_time*1000:.0f}ms"
-        
+
         if len(log_line) > 80:
             log_line = log_line[:79] + "…"
-        
+
         print(log_line)
-    
+
     return response
 
 # Error handler
@@ -63,10 +63,10 @@ async def log_requests(request: Request, call_next):
 async def global_exception_handler(request: Request, exc: Exception):
     status_code = getattr(exc, 'status_code', 500)
     message = str(exc) if str(exc) else "Internal Server Error"
-    
+
     print(f"Error: {message}")
     traceback.print_exc()
-    
+
     return JSONResponse(
         status_code=status_code,
         content={"message": message}
@@ -89,7 +89,7 @@ async def upload_files(
         # Validate file types
         valid_extensions = ['.js', '.jsx', '.ts', '.tsx', '.py', '.java', '.cpp', '.c', '.go']
         invalid_files = []
-        
+
         for file in files:
             if file.filename and not any(file.filename.lower().endswith(ext) for ext in valid_extensions):
                 invalid_files.append(file.filename)
@@ -113,7 +113,7 @@ async def upload_files(
             # Read file content
             content = await file.read()
             await file.seek(0)  # Reset file pointer for potential future reads
-            
+
             if file.filename:
                 # Upload file to S3
                 s3_key = await aws_service.upload_file_to_s3(content, file.filename, session.id)
@@ -159,7 +159,7 @@ async def get_analysis_status(session_id: str):
             raise HTTPException(status_code=404, detail="Session not found")
 
         files = await storage.get_file_analysis_by_session(session_id)
-        
+
         # Calculate processing steps
         upload_completed = all(f.status != 'uploading' for f in files)
         lambda_completed = all(f.status in ['processing', 'completed'] for f in files)
@@ -205,7 +205,7 @@ async def get_analysis_results(session_id: str):
             raise HTTPException(status_code=400, detail="Analysis not completed yet")
 
         files = await storage.get_file_analysis_by_session(session_id)
-        
+
         # Aggregate results from all files
         passed_checks = 0
         warnings = 0
@@ -249,7 +249,7 @@ async def webhook_process(request: Request):
         body = await request.json()
         session_id = body.get('sessionId')
         s3_key = body.get('s3Key')
-        
+
         if not session_id or not s3_key:
             raise HTTPException(status_code=400, detail="Missing sessionId or s3Key")
 
@@ -295,24 +295,32 @@ async def serve_static_files(path: str):
     # Skip API routes
     if path.startswith("api/"):
         raise HTTPException(status_code=404, detail="Not found")
-    
+
     static_path = Path(f"dist/public/{path}")
-    
+
     # If it's a static file that exists, serve it
     if static_path.exists() and static_path.is_file():
         return FileResponse(static_path)
-    
+
     # Otherwise, serve the React app (for client-side routing)
     return FileResponse("dist/public/index.html")
 
 # For direct execution
 if __name__ == "__main__":
     import uvicorn
-    
+
     # Get port from environment variable, default to 5000
     port = int(os.environ.get('PORT', 5000))
     is_dev = os.environ.get('NODE_ENV') == 'development'
-    
+
+    print("CodeReview AI Server starting...")
+    print("Features:")
+    print("- Intelligent file processing")
+    print("- AI-powered code analysis")
+    print("- Real-time status updates")
+    print("- Comprehensive code review")
+
+
     # Run with uvicorn - use import string for reload mode
     if is_dev:
         uvicorn.run(
