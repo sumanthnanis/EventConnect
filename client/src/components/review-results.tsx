@@ -139,7 +139,7 @@ export default function ReviewResults({ sessionId }: ReviewResultsProps) {
           </div>
           <div>
             <h3 className="text-xl font-semibold text-slate-900">Code Review Results</h3>
-            <p className="text-sm text-slate-600">Analysis completed by Amazon Bedrock Claude</p>
+            <p className="text-sm text-slate-600">Analysis completed by AI Code Reviewer</p>
           </div>
         </div>
         <div className="flex items-center space-x-2">

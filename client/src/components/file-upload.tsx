@@ -443,7 +443,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
             ) : (
               <>
                 <i className="fas fa-magic mr-2"></i>
-                Analyze Code with AI
+                Analyze Code
               </>
             )}
           </Button>
