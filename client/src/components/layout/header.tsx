@@ -14,7 +14,7 @@ export default function Header() {
             </div>
             <div>
               <h1 className="text-xl font-bold text-slate-900">CodeReview AI</h1>
-              <p className="text-xs text-slate-500">Powered by Amazon Bedrock</p>
+              <p className="text-xs text-slate-500">Advanced Code Analysis</p>
             </div>
           </div>
 
@@ -27,7 +27,7 @@ export default function Header() {
           <div className="flex items-center space-x-4">
             <div className="hidden md:flex items-center space-x-2 text-sm text-slate-600">
               <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse-soft"></div>
-              <span>AWS Connected</span>
+              <span>AI Ready</span>
             </div>
             <Button
               variant="ghost"
