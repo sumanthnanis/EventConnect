@@ -3,7 +3,7 @@ import Footer from "@/components/layout/footer";
 import FileUpload from "@/components/file-upload";
 import ProcessingStatus from "@/components/processing-status";
 import ReviewResults from "@/components/review-results";
-import AwsSetupGuide from "@/components/aws-setup-guide";
+// import AwsSetupGuide from "@/components/aws-setup-guide";
 import { useState } from "react";
 
 export default function Home() {
@@ -21,21 +21,19 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-slate-50">
       <Header />
-      
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid lg:grid-cols-2 gap-8 mb-8">
           <FileUpload onUploadComplete={handleUploadComplete} />
-          <ProcessingStatus 
-            sessionId={sessionId} 
+          <ProcessingStatus
+            sessionId={sessionId}
             onComplete={handleAnalysisComplete}
           />
         </div>
 
-        {showResults && sessionId && (
-          <ReviewResults sessionId={sessionId} />
-        )}
+        {showResults && sessionId && <ReviewResults sessionId={sessionId} />}
 
-        <AwsSetupGuide />
+        {/* <AwsSetupGuide /> */}
       </main>
 
       <Footer />
