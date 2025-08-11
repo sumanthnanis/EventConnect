@@ -326,19 +326,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
     }
   };
 
-  const handleDemoUpload = () => {
-    // Create mock files for demo
-    const mockFiles = [
-      new File(['console.log("Hello World");'], "demo.js", {
-        type: "text/javascript",
-      }),
-      new File(["function test() { return true; }"], "utils.js", {
-        type: "text/javascript",
-      }),
-    ];
 
-    uploadMutation.mutate(mockFiles);
-  };
 
   const getFileIcon = (fileName: string) => {
     const ext = fileName.toLowerCase().split(".").pop();
@@ -515,16 +503,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
             )}
           </Button>
 
-          {/* Demo Button */}
-          {/* <Button
-            onClick={handleDemoUpload}
-            disabled={uploadMutation.isPending}
-            variant="outline"
-            className="w-full"
-          >
-            <i className="fas fa-play-circle mr-2"></i>
-            Try Demo (No Files Needed)
-          </Button> */}
+
         </div>
       </div>
 
