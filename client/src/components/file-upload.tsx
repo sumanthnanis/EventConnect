@@ -516,7 +516,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           </Button>
 
           {/* Demo Button */}
-          <Button
+          {/* <Button
             onClick={handleDemoUpload}
             disabled={uploadMutation.isPending}
             variant="outline"
@@ -524,7 +524,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           >
             <i className="fas fa-play-circle mr-2"></i>
             Try Demo (No Files Needed)
-          </Button>
+          </Button> */}
         </div>
       </div>
 
